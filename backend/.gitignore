@@ -1,0 +1,26 @@
+# Python / Flask
+venv/
+__pycache__/
+*.pyc
+*.pyo
+instance/
+*.db
+*.sqlite3
+.env
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+frontend/.env.local
+frontend/.env*.local
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
