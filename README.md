@@ -1,12 +1,19 @@
 # Agennix
 
-Sistema de gestao para barbearias (SaaS multi-tenant): agendamentos, lembretes
-automaticos no WhatsApp, dashboards operacional e financeiro, API para
-integradores e landing page de vendas.
+Sistema de agendamento para estabelecimentos de servico por hora marcada —
+barbearias, saloes, clinicas, estudios, consultorios. SaaS multi-tenant com
+lembretes automaticos no WhatsApp, dashboards operacional e financeiro, API
+para integradores e landing page de vendas.
 
-> **Status:** estrutura do projeto criada. Nenhuma funcionalidade implementada
-> ainda — os arquivos Python contem apenas um `TODO` indicando a historia de
-> usuario que cada um atende.
+> **Status:** estrutura do projeto criada e modelo de dados desenhado. Nenhuma
+> funcionalidade implementada ainda — os arquivos Python contem apenas um
+> `TODO` indicando a historia de usuario que cada um atende.
+
+## Modelagem do banco
+
+O desenho completo esta em **[docs/modelagem.md](docs/modelagem.md)**: diagrama
+ER, dicionario de dados das 19 tabelas, constraints e a matriz que rastreia
+cada criterio de aceitacao ate a tabela/coluna que o atende.
 
 ## Stack
 
@@ -27,12 +34,17 @@ integradores e landing page de vendas.
 do navegador. Os dois caminhos vivem em `backend/app/auth/` e sao independentes.
 
 **RBAC proprio.** O pacote Flask-RBAC esta abandonado, entao o controle de
-acesso por perfil (Administrador, Atendente, Profissional, Cliente) e feito por
-um decorator proprio em `backend/app/auth/rbac.py`.
+acesso por perfil e feito por um decorator proprio em
+`backend/app/auth/rbac.py`. Sao tres perfis de login, guardados no enum
+`users.role`: Administrador, Atendente e Profissional. O **cliente final nao e
+um perfil de login** — ele agenda sem senha (tabela `clients`) e so cria conta
+se quiser acompanhar o historico.
 
-**Multitenant por coluna.** Todo modelo de negocio carrega `tenant_id` via
-`TenantMixin` (`backend/app/models/mixins.py`), e `backend/app/utils/tenant.py`
-centraliza o filtro para que nenhuma consulta vaze dados de outra barbearia.
+**Multitenant por coluna.** Um unico banco, um unico schema: todo modelo de
+negocio carrega `tenant_id` via `TenantMixin` (`backend/app/models/mixins.py`),
+e `backend/app/utils/tenant.py` centraliza o filtro para que nenhuma consulta
+vaze dados de outro estabelecimento. A garantia final fica no banco, com FK
+composta `(tenant_id, id)`.
 
 ## Estrutura
 
