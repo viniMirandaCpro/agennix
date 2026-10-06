@@ -1,4 +1,4 @@
-"""Cliente final da barbearia. Identificado por nome + WhatsApp, sem senha.
+"""Cliente final do estabelecimento.
 
-TODO: Historia: Agendamento Rapido pelo Cliente (sem login previo). Email e alternativa quando nao houver telefone.
+TODO: Senha OPCIONAL: agenda sem login e cria conta depois. CHECK exige whatsapp ou email. UNIQUE (tenant_id, whatsapp). Ver docs/modelagem.md secoes 3.3 e 4.4.
 """

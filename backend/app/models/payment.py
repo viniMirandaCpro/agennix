@@ -1,4 +1,4 @@
-"""Pagamento / lancamento financeiro vinculado a um agendamento.
+"""Entrada de caixa: pagamento de atendimento ou venda de pacote.
 
-TODO: Historia: Dashboard Financeiro (receita bruta por periodo, servico e profissional).
+TODO: CHECK exige exatamente um entre appointment_id e client_package_id. Ver docs/modelagem.md secoes 3.10 e 4.5.
 """

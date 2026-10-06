@@ -1,4 +1,4 @@
-"""Barbearia (tenant). Raiz do isolamento multitenant.
+"""Estabelecimento (tenant). Raiz do isolamento multitenant.
 
-TODO: Historia: Modelagem do banco - Multitenant. Toda query do sistema deve ser filtrada por este id.
+TODO: Segmento em 'segment' (barbearia, salao, clinica, estudio, consultorio). 'slug' alimenta a URL publica /agendar/{slug}. Ver docs/modelagem.md secao 3.1.
 """
