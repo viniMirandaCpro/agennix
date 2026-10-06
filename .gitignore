@@ -1,19 +1,29 @@
 # Python / Flask
 venv/
+backend/venv/
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+.pytest_cache/
 instance/
 *.db
 *.sqlite3
+
+# Env
 .env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env.local
+frontend/.env*.local
 
 # Node / Next.js
 node_modules/
 .next/
 out/
-frontend/.env.local
-frontend/.env*.local
+next-env.d.ts
+.vercel
 
 # Docker
 *.log
