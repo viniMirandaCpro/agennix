@@ -3,7 +3,7 @@
 Choque de horario: checado aqui para dar mensagem amigavel; a garantia e a
 constraint EXCLUDE do banco (docs/modelagem.md 4.2).
 """
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from flask_restful import abort
@@ -14,6 +14,7 @@ from app.models import Appointment, Client, Professional, Service
 from app.utils.phone import normalize_whatsapp
 from app.utils.tenant import get_owned
 
+SLOT_STEP = timedelta(minutes=30)
 CONFLICT_MESSAGE = "Profissional já tem agendamento nesse horário"
 EXCLUSION_VIOLATION = "23P01"
 
@@ -143,3 +144,32 @@ def update_appointment(tenant, appt, data):
     appt.status = new_status
     _commit()
     return appt
+
+
+def available_slots(tenant, professional, service, day):
+    """Inicios livres ("HH:MM") no dia: cabe inteiro num turno, nao colide e e futuro."""
+    now = datetime.now(timezone.utc)
+    duration = timedelta(minutes=service.duration_minutes)
+    day_start = local_datetime(tenant, day, time.min)
+    busy = [
+        (a.starts_at, a.ends_at)
+        for a in Appointment.query.filter(
+            Appointment.tenant_id == tenant.id,
+            Appointment.professional_id == professional.id,
+            Appointment.status != "cancelado",
+            Appointment.starts_at < day_start + timedelta(days=1),
+            Appointment.ends_at > day_start,
+        )
+    ]
+    slots = []
+    for shift in professional.working_hours:
+        if shift.weekday != day.weekday():
+            continue
+        start = local_datetime(tenant, day, shift.start_time)
+        shift_end = local_datetime(tenant, day, shift.end_time)
+        while start + duration <= shift_end:
+            end = start + duration
+            if start > now and not any(s < end and e > start for s, e in busy):
+                slots.append(start.strftime("%H:%M"))
+            start += SLOT_STEP
+    return sorted(slots)
