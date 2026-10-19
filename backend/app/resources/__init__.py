@@ -1,8 +1,16 @@
 """Registro central dos recursos Flask-RESTful (prefixo /api, aplicado no create_app)."""
 from app.resources.auth import Login, Logout, Me
+from app.resources.clients import ClientList
+from app.resources.professionals import ProfessionalItem, ProfessionalList
+from app.resources.services import ServiceItem, ServiceList
 
 
 def register_resources(api):
     api.add_resource(Login, "/auth/login")
     api.add_resource(Logout, "/auth/logout")
     api.add_resource(Me, "/auth/me")
+    api.add_resource(ServiceList, "/services")
+    api.add_resource(ServiceItem, "/services/<int:service_id>")
+    api.add_resource(ProfessionalList, "/professionals")
+    api.add_resource(ProfessionalItem, "/professionals/<int:professional_id>")
+    api.add_resource(ClientList, "/clients")
