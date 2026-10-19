@@ -1,4 +1,5 @@
-"""Schema de entrada/saida do recurso 'client'.
+"""Saida do recurso 'client'."""
 
-TODO: Rejeitar requisicoes com campos obrigatorios ausentes (Historia: Criacao de ENDPOINTS - Flask-RESTful).
-"""
+
+def dump_client(c):
+    return {"id": c.id, "name": c.name, "whatsapp": c.whatsapp, "email": c.email}

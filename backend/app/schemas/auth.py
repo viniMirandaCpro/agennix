@@ -1,4 +1,9 @@
-"""Schema de entrada/saida do recurso 'auth'.
+"""Saida do recurso 'auth': usuario logado + estabelecimento."""
 
-TODO: Rejeitar requisicoes com campos obrigatorios ausentes (Historia: Criacao de ENDPOINTS - Flask-RESTful).
-"""
+
+def dump_session(user):
+    t = user.tenant
+    return {
+        "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role},
+        "tenant": {"id": t.id, "name": t.name, "slug": t.slug, "timezone": t.timezone},
+    }

@@ -1,6 +1,4 @@
-"""Entrypoint WSGI usado pelo gunicorn.
+"""Entrypoint WSGI usado pelo gunicorn e pelo `flask run`."""
+from app import create_app
 
-TODO:
-    from app import create_app
-    app = create_app()
-"""
+app = create_app()

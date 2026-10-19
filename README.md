@@ -5,9 +5,10 @@ barbearias, saloes, clinicas, estudios, consultorios. SaaS multi-tenant com
 lembretes automaticos no WhatsApp, dashboards operacional e financeiro, API
 para integradores e landing page de vendas.
 
-> **Status:** estrutura do projeto criada e modelo de dados desenhado. Nenhuma
-> funcionalidade implementada ainda — os arquivos Python contem apenas um
-> `TODO` indicando a historia de usuario que cada um atende.
+> **Status:** MVP implementado - login, cadastro de profissionais (com
+> expediente) e servicos, agenda do painel e agendamento publico pelo link
+> `/agendar/{slug}`. As demais historias (RBAC, WhatsApp, financeiro, pacotes,
+> planos, API keys, landing page) seguem como `TODO` nos arquivos.
 
 ## Modelagem do banco
 
@@ -84,16 +85,31 @@ cp .env.example .env
 cp backend/.env.example backend/.env
 
 # 2. Subir tudo
-docker compose up -d
+docker compose up -d --build
 
-# 3. Criar as migracoes (apos os modelos terem colunas)
-docker compose exec backend flask db init
-docker compose exec backend flask db migrate -m "estrutura inicial"
+# 3. Criar as tabelas e o estabelecimento de demonstracao
 docker compose exec backend flask db upgrade
+docker compose exec backend flask seed
 ```
 
-- Painel: http://localhost:3000
-- API: http://localhost:5000
+- Painel: http://localhost:3000/login - `admin@agennix.dev` / `agennix123`
+- Link publico de agendamento: http://localhost:3000/agendar/demo
+- API: http://localhost:5000/api
+
+> **macOS:** a porta 5000 costuma estar ocupada pelo AirPlay Receiver. Nesse
+> caso use `BACKEND_PORT=5001` no `.env` (o frontend do compose acompanha).
+> Se a 5432 tambem estiver em uso, troque `POSTGRES_PORT`.
+
+### Testes
+
+```bash
+# backend - Postgres real (EXCLUDE/tstzrange nao existem no SQLite)
+docker compose exec db createdb -U agennix agennix_test   # so na primeira vez
+docker compose exec backend pytest
+
+# frontend
+cd frontend && npm test && npm run lint
+```
 
 ### Sem Docker (apenas backend)
 
@@ -110,5 +126,6 @@ local (`@localhost:5432` em vez de `@db:5432`).
 
 ## Proximo passo
 
-Implementar os modelos em `backend/app/models/`, gerar a primeira migracao e
-entregar a historia de **login**, que destrava todas as demais.
+Com o MVP de agendamento de pe, as proximas historias naturais sao o RBAC
+(perfis administrador/atendente/profissional) e a confirmacao/lembrete por
+WhatsApp, que ja tem tabela desenhada em `docs/modelagem.md`.
