@@ -23,10 +23,12 @@ professional.py declaram mais de uma tabela cada:
     api_key.py          api_keys
     notification.py     notifications
 
-TODO: importar todos os modelos aqui para que o Alembic/Flask-Migrate os
-enxergue ao gerar as migracoes. Exemplo:
-
-    from app.models.tenant import Tenant
-    from app.models.user import User
-    ...
+No MVP so 7 tabelas estao implementadas; os demais modulos seguem como TODO.
 """
+from app.models.tenant import Tenant
+from app.models.user import User
+from app.models.client import Client
+from app.models.professional import Professional
+from app.models.service import Service
+from app.models.working_hours import WorkingHours
+from app.models.appointment import Appointment

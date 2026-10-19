@@ -1,4 +1,5 @@
-"""Registro central dos recursos Flask-RESTful.
+"""Registro central dos recursos Flask-RESTful (prefixo /api, aplicado no create_app)."""
 
-TODO: expor register_resources(api) e mapear cada Resource para sua rota em /api/v1/...
-"""
+
+def register_resources(api):
+    pass
