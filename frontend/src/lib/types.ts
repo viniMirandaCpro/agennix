@@ -1,7 +1,9 @@
 // Tipos espelhando as respostas do backend (backend/app/schemas/).
 
+export type Role = "administrador" | "atendente" | "profissional";
+
 export type Session = {
-  user: { id: number; name: string; email: string; role: string };
+  user: { id: number; name: string; email: string; role: Role };
   tenant: { id: number; name: string; slug: string; timezone: string };
 };
 
@@ -49,4 +51,14 @@ export type Appointment = {
   client: Client;
   professional: { id: number; name: string };
   service: { id: number; name: string; duration_minutes: number };
+};
+
+export type User = {
+  id: number;
+  name: string;
+  email: string;
+  role: Role;
+  active: boolean;
+  last_login_at: string | null;
+  professional: { id: number; name: string } | null; // so no perfil profissional
 };

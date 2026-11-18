@@ -2,6 +2,7 @@
 
 // Agenda (Historias 5.2, 5.4 e 5.8): lista por dia, alternando dia/semana/mes,
 // filtros por profissional e servico, status visual e acoes rapidas.
+// Perfil profissional (Historia 5.5): so leitura, e o backend ja filtra a propria agenda.
 import { useEffect, useMemo, useState } from "react";
 
 import AppointmentForm from "@/components/dashboard/AppointmentForm";
@@ -29,7 +30,8 @@ const VIEWS: { value: View; label: string }[] = [
 const endTime = (a: Appointment) => a.ends_at.slice(11, 16);
 
 export default function AgendamentosPage() {
-  const { tenant } = useSession();
+  const { tenant, user } = useSession();
+  const readOnly = user.role === "profissional";
   const today = todayIn(tenant.timezone);
   const [view, setView] = useState<View>("dia");
   const [anchor, setAnchor] = useState(today);
@@ -91,7 +93,7 @@ export default function AgendamentosPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Agendamentos</h1>
-        <button className="btn-primary" onClick={() => setModal({})}>Novo agendamento</button>
+        {!readOnly && <button className="btn-primary" onClick={() => setModal({})}>Novo agendamento</button>}
       </div>
 
       <div className="card flex flex-wrap items-center gap-3 p-3">
@@ -112,11 +114,13 @@ export default function AgendamentosPage() {
         </div>
         <p className="text-sm font-medium text-gray-700 first-letter:uppercase">{formatPeriod(view, anchor)}</p>
         <div className="flex flex-1 flex-wrap justify-end gap-2">
-          <select className="input w-auto" aria-label="Filtrar por profissional" value={professionalId}
-            onChange={(e) => setProfessionalId(e.target.value)}>
-            <option value="">Todos os profissionais</option>
-            {professionals.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          {!readOnly && (
+            <select className="input w-auto" aria-label="Filtrar por profissional" value={professionalId}
+              onChange={(e) => setProfessionalId(e.target.value)}>
+              <option value="">Todos os profissionais</option>
+              {professionals.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          )}
           <select className="input w-auto" aria-label="Filtrar por serviço" value={serviceId}
             onChange={(e) => setServiceId(e.target.value)}>
             <option value="">Todos os serviços</option>
@@ -166,7 +170,7 @@ export default function AgendamentosPage() {
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS[a.status].className}`}>
                     {STATUS[a.status].label}
                   </span>
-                  {!cancelled && (
+                  {!cancelled && !readOnly && (
                     <div className="flex flex-wrap gap-1">
                       <button className="btn py-1" onClick={() => setModal({ appointment: a })}>Editar</button>
                       {a.status === "confirmado" && (
