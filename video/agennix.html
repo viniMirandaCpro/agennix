@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Agennix · fluxo</title>
+<style>
+@font-face{font-family:Geist;src:url(fonts/geist-latin.woff2) format("woff2");font-weight:300 700;font-display:block}
+:root{--bg:#ECE9E4;--ink:#151413;--paper:#fff;--muted:#8A847B;--accent:#B5652B}
+*{box-sizing:border-box;margin:0}
+html,body{background:var(--bg);overflow:hidden}
+#frame{position:relative;overflow:hidden;background:var(--bg);font-family:Geist,system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;font-synthesis:none;transform-origin:0 0}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+#shape{position:absolute;overflow:hidden}
+.anchor{position:absolute;left:50%;top:50%}
+.item{position:absolute}
+.ini{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:500;line-height:1}
+.L{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap}
+.btn{height:88px;line-height:88px;padding:0 50px;font-size:30px;font-weight:500;color:#fff;letter-spacing:-.01em}
+.hdr{font-size:22px;font-weight:500;color:var(--muted)}
+/* servicos */
+#l2{width:620px;padding:30px 16px 16px}
+#l2 .hdr{padding:0 26px 16px}
+.row{height:96px;display:flex;align-items:center;padding:0 26px;gap:22px}
+.row+.row{margin-top:8px}
+.rn{flex:1;display:flex;flex-direction:column;gap:6px}
+.rn b{font-size:28px;font-weight:500}
+.rn span{font-size:20px;color:var(--muted)}
+.rp{font-size:26px;font-weight:500}
+.radio{width:32px;height:32px;border-radius:50%;border:2.5px solid #CEC8BF;position:relative}
+#rdot{position:absolute;inset:-2.5px;border-radius:50%;background:var(--accent)}
+#rdot::after{content:"";position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;background:#fff}
+/* profissionais */
+#l3{padding:30px 52px 34px;text-align:center}
+.pros{display:flex;gap:44px;margin-top:26px}
+.av{width:128px;height:128px}
+.nm{font-size:22px;font-weight:500;margin-top:14px}
+#l3b{width:340px;padding:40px 0;text-align:center}
+#l3b .av{width:168px;height:168px;margin:0 auto}
+.nmBig{font-size:32px;font-weight:600;margin-top:22px;letter-spacing:-.01em}
+.role{font-size:22px;color:var(--muted);margin-top:6px}
+/* dia e horario */
+.box{width:980px;height:300px}
+.ttl{position:absolute;left:56px;top:44px;font-size:30px;font-weight:600;letter-spacing:-.01em}
+.cap{position:absolute;right:56px;top:50px;font-size:22px;color:var(--muted)}
+.day{position:absolute;top:116px;width:104px;height:136px;margin-left:-52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.day i{font-style:normal;font-size:21px;color:var(--muted)}
+.day b{font-size:36px;font-weight:500}
+.day.off{opacity:.35}
+.slot{position:absolute;top:152px;width:100px;margin-left:-50px;height:64px;line-height:64px;text-align:center;font-size:26px;font-weight:500}
+.slot.busy{color:var(--muted);opacity:.55}
+.inv .day b,.inv .slot{color:#fff}
+.inv .day i{color:rgba(255,255,255,.7)}
+/* confirmacao e notificacao */
+#l6b{width:88px;height:88px}
+#l6b svg{display:block}
+.isl{color:#fff}
+#l7a{width:240px;height:64px}
+.mini{position:absolute;left:14px;top:14px;width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;color:#fff}
+.itime{position:absolute;right:24px;top:0;line-height:64px;font-size:22px;font-weight:500}
+#l7b{height:84px;padding:0 36px 0 16px;display:flex;align-items:center;gap:16px}
+#l7b .mini{position:static;width:52px;height:52px;font-size:23px}
+.itext{font-size:26px}
+.itext b{font-weight:600}
+.itext span{color:#BDB7AD}
+/* whatsapp */
+#l8{width:560px;padding:26px 32px 20px;white-space:normal}
+.snd{font-size:21px;font-weight:600}
+.snd span{font-weight:400;color:var(--muted)}
+.msg{font-size:30px;line-height:1.3;margin-top:10px;letter-spacing:-.005em}
+.msg b{font-weight:600}
+.meta{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px;font-size:18px;color:var(--muted)}
+/* dashboard */
+#l9{width:1000px;height:650px}
+.t9{position:absolute;left:48px;top:44px;font-size:30px;font-weight:600;letter-spacing:-.01em}
+#tog{position:absolute;right:48px;top:36px;height:56px;padding:6px;border-radius:28px;background:#F2EFEA;display:flex}
+#tog span{display:block;padding:0 22px;line-height:44px;font-size:21px;font-weight:500;color:#6B665E}
+#knob{position:absolute;top:6px;height:44px;border-radius:22px;background:var(--ink)}
+#togInv{position:absolute;inset:0;padding:6px;display:flex}
+#togInv span{color:#fff}
+.kpi{position:absolute;left:48px;top:104px;display:flex;align-items:baseline;gap:14px}
+.kpi b{font-size:64px;font-weight:600;letter-spacing:-.03em}
+.kpi span{font-size:24px;color:var(--muted)}
+#leg{position:absolute;right:48px;top:140px;display:flex;align-items:center;font-size:20px;color:var(--muted)}
+#leg i{width:10px;height:10px;border-radius:50%;margin:0 8px 0 22px}
+#chart{position:absolute;left:48px;top:214px;overflow:visible}
+#tip{position:absolute;height:44px;border-radius:14px;background:var(--ink);color:#fff;font-size:20px;font-weight:500;overflow:hidden}
+#tip span{position:absolute;left:0;top:0;line-height:44px;padding:0 16px;white-space:nowrap}
+/* wordmark */
+#wm{position:absolute;white-space:nowrap}
+#wmText{font-size:156px;font-weight:600;letter-spacing:-.055em;line-height:1}
+#wmText span{display:inline-block}
+#tag{font-size:34px;color:var(--muted);text-align:center;margin-top:20px;letter-spacing:-.005em}
+#cursor{position:absolute;left:0;top:0;filter:drop-shadow(0 2px 3px rgba(21,20,19,.22))}
+#dbg{position:absolute;left:18px;top:12px;font:500 22px Geist;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="frame">
+  <div id="world">
+    <div id="wm"><div id="wmText"><span>A</span><span>g</span><span>e</span><span>n</span><span>n</span><span id="dotless">ı</span><span>x</span><span id="bl" style="width:0;height:0"></span></div><div id="tag">Agendamento para barbearias</div></div>
+    <div id="shape">
+      <div class="anchor">
+        <div class="item"><span class="ini">C</span></div>
+        <div class="item"><span class="ini">M</span></div>
+        <div class="item"><span class="ini">R</span></div>
+      </div>
+
+      <div class="L btn" id="l1">Agendar horário</div>
+
+      <div class="L" id="l2">
+        <div class="hdr">Escolha o serviço</div>
+        <div class="row"><div class="rn"><b>Corte</b><span>30 min</span></div><div class="rp">R$ 45</div><div class="radio"></div></div>
+        <div class="row"><div class="rn"><b>Barba</b><span>30 min</span></div><div class="rp">R$ 35</div><div class="radio"></div></div>
+        <div class="row"><div class="rn"><b>Corte + Barba</b><span>1 h</span></div><div class="rp">R$ 70</div><div class="radio" id="radio2"><i id="rdot"></i></div></div>
+      </div>
+
+      <div class="L" id="l3">
+        <div class="hdr">Escolha o profissional</div>
+        <div class="pros">
+          <div><div class="av"></div><div class="nm">Carlos</div></div>
+          <div><div class="av"></div><div class="nm">Marina</div></div>
+          <div><div class="av"></div><div class="nm">Rafael</div></div>
+        </div>
+      </div>
+
+      <div class="L" id="l3b"><div class="av"></div><div class="nmBig">Marina</div><div class="role">Barbeira</div></div>
+
+      <div class="L box" id="l45">
+        <div class="ttl" id="ttlA">Segunda, 19 de outubro</div>
+        <div class="ttl" id="ttlB">Quinta, 22 de outubro</div>
+        <div class="cap" id="capA">com Marina</div>
+        <div class="cap" id="capB">Corte + Barba · 1 h</div>
+      </div>
+      <div class="L box" id="l4"></div>
+      <div class="L box" id="l5"></div>
+
+      <div class="L btn" id="l6">Confirmar</div>
+      <div class="L" id="l6b"><svg width="88" height="88" viewBox="0 0 88 88">
+        <circle id="arc" cx="44" cy="44" r="19" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" pathLength="1" stroke-dasharray=".28 1"/>
+        <path id="chk" d="M31 45.5l8.5 8.5L57.5 35" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>
+      </svg></div>
+
+      <div class="L isl" id="l7a"><div class="mini">M</div><div class="itime">14:30</div></div>
+      <div class="L isl" id="l7b"><div class="mini">M</div><div class="itext"><b>Novo agendamento</b><span> · 14:30 · Corte + Barba</span></div></div>
+
+      <div class="L" id="l8">
+        <div class="snd">Barbearia Ferraz <span>· lembrete automático</span></div>
+        <div class="msg">Seu horário é <b>amanhã às 14:30</b> com a Marina.</div>
+        <div class="meta"><span>09:00</span><svg width="30" height="20" viewBox="0 0 24 16" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path id="tk1" d="M1.8 8.6l4.1 4.1L14.4 4"/><path id="tk2" d="M9.6 11.2l1.5 1.5L19.6 4" pathLength="1"/></svg></div>
+      </div>
+
+      <div class="L" id="l9">
+        <div class="t9" id="t9a">Agendamentos da semana</div>
+        <div class="t9" id="t9b">Faturamento da semana</div>
+        <div id="tog"><div id="knob"></div><span>Por profissional</span><span>Financeiro</span><div id="togInv"><span>Por profissional</span><span>Financeiro</span></div></div>
+        <div class="kpi" id="k9a"><b>82</b><span>agendamentos</span></div>
+        <div class="kpi" id="k9b"><b>R$ 4.320</b><span>faturados</span></div>
+        <div id="leg"><i style="background:#151413"></i>Carlos<i style="background:#B5652B"></i>Marina<i style="background:#B9B2A7"></i>Rafael</div>
+        <svg id="chart" width="904" height="380"></svg>
+        <div id="tip"><span id="tipA">Qui 22 · 14 agendamentos</span><span id="tipB">Qui 22 · R$ 725</span></div>
+      </div>
+    </div>
+  </div>
+  <svg id="cursor" viewBox="0 0 24 24"><path d="M5.5 3.2v16.9c0 .5.6.7.9.4l3.9-3.6 2.6 5.9c.2.4.6.5 1 .4l2-.9c.4-.2.5-.6.4-1l-2.6-5.8 5.3-.4c.5 0 .7-.6.3-.9L6.3 2.8c-.3-.3-.8-.1-.8.4z" fill="#151413" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+  <div id="dbg" hidden></div>
+</div>
+<script>
+// Tudo que aparece na tela e funcao pura de t, calculada em seek(t).
+const Q = new URLSearchParams(location.search);
+const W = +Q.get('w') || 1440, H = +Q.get('h') || 1440, RENDER = Q.has('render');
+const VERT = H > W, FX = VERT ? .88 : .78, FY = VERT ? .44 : .68, ZMAX = VERT ? 1.9 : 2.2;
+const BEATS = window.BEATS || Array.from({ length: 33 }, (_, i) => i * .5);
+const T = BEATS[32];
+const B = (bar, beat, frac = 0) => { const i = (bar - 1) * 4 + beat - 1; return BEATS[i] + frac * (BEATS[i + 1] - BEATS[i]); };
+const mod = t => ((t % T) + T) % T;
+const lerp = (a, b, m) => a + (b - a) * m;
+const mix = (a, b, m) => a.map((x, i) => lerp(x, b[i], m));
+const rgb = c => `rgb(${c.map(Math.round).join(',')})`;
+const $ = s => document.querySelector(s);
+
+// Resposta ao degrau de uma mola amortecida (forma fechada), 0 -> 1.
+function sstep(t, w, z) {
+  if (t <= 0) return 0;
+  if (z >= 1) return 1 - Math.exp(-w * t) * (1 + w * t);
+  const wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + z * w / wd * Math.sin(wd * t));
+}
+// Mola solta de x0 com velocidade v0 (deslocamento ate o alvo).
+function siv(t, x0, v0, w, z) {
+  if (t <= 0) return x0;
+  const wd = w * Math.sqrt(1 - z * z);
+  return Math.exp(-z * w * t) * (x0 * Math.cos(wd * t) + (v0 + z * w * x0) / wd * Math.sin(wd * t));
+}
+// Valor que muda de alvo varias vezes = soma de uma mola por mudanca.
+// Periodico: antes da 1a chave vale a ultima, e as molas do loop anterior seguem somando.
+function track(keys, W0 = 15, Z0 = .8) {
+  const vec = Array.isArray(keys[0][1]);
+  const ks = keys.map(k => ({ t: k[0], v: [].concat(k[1]), w: k[2] ?? W0, z: k[3] ?? Z0 })).sort((a, b) => a.t - b.t);
+  const last = ks[ks.length - 1].v;
+  let prev = last;
+  for (const k of ks) { k.d = k.v.map((x, i) => x - prev[i]); prev = k.v; }
+  return t => {
+    t = mod(t);
+    const o = last.slice();
+    for (const k of ks) {
+      const f = sstep(t - k.t, k.w, k.z) + sstep(t + T - k.t, k.w, k.z);
+      for (let i = 0; i < o.length; i++) o[i] += k.d[i] * f;
+    }
+    return vec ? o : o[0];
+  };
+}
+// Retangulo [L,T,R,B] cujas bordas laterais andam em molas diferentes: a lider e mais rapida.
+function liquid(keys, fast = 26, slow = 14, z = .8) {
+  keys = keys.slice().sort((a, b) => a[0] - b[0]);
+  const Lk = [], Rk = [], Vk = [];
+  keys.forEach(([t, r, hard], j) => {
+    const p = keys[(j - 1 + keys.length) % keys.length][1], right = r[0] + r[2] > p[0] + p[2];
+    const wl = hard ? 400 : right ? slow : fast, wr = hard ? 400 : right ? fast : slow, zz = hard ? 1 : z;
+    Lk.push([t, r[0], wl, zz]); Rk.push([t, r[2], wr, zz]); Vk.push([t, [r[1], r[3]], hard ? 400 : 16, hard ? 1 : .82]);
+  });
+  const L = track(Lk), R = track(Rk), V = track(Vk);
+  return t => { const v = V(t); return [L(t), v[0], R(t), v[1]]; };
+}
+// Presenca 0..1 de um elemento entre tin e tout, com entrada e saida proprias.
+function pres(t, tin, tout, wi = 26, wo = 42) {
+  t = mod(t);
+  const f = x => sstep(x - tin, wi, 1) * (1 - sstep(x - tout, wo, 1));
+  return f(t) + f(t + T);
+}
+// Pulso de clique: afunda em a, volta em b.
+function pulse(t, a, b, wa = 45, wb = 28) {
+  const f = x => sstep(x - a, wa, .7) - sstep(x - b, wb, .75);
+  return f(t) + f(t - T) + f(t + T);
+}
+function fade(el, p, blur = 12) {
+  el.style.opacity = p.toFixed(4);
+  const bl = (1 - p) * blur;
+  el.style.filter = bl > .05 ? `blur(${bl.toFixed(2)}px)` : 'none';
+  el.style.visibility = p < .002 ? 'hidden' : 'visible';
+}
+
+const INK = [21, 20, 19], PAPER = [255, 255, 255], CHIP = [243, 240, 235], HOVER = [233, 229, 222],
+  AVG = [234, 230, 224], ACC = [181, 101, 43], WHITE = [255, 255, 255], MUTED = [160, 154, 145];
+
+// timeline: t{compasso}{batida}
+const t11 = B(1, 1), t12 = B(1, 2), t13 = B(1, 3), t14 = B(1, 4), t21 = B(2, 1), t22 = B(2, 2), t23 = B(2, 3), t24 = B(2, 4),
+  t31 = B(3, 1), t32 = B(3, 2), t33 = B(3, 3), t34 = B(3, 4), t41 = B(4, 1), t42 = B(4, 2), t43 = B(4, 3), t44 = B(4, 4),
+  t51 = B(5, 1), t52 = B(5, 2), t53 = B(5, 3), t54 = B(5, 4), t61 = B(6, 1), t62 = B(6, 2), t63 = B(6, 3), t64 = B(6, 4),
+  t71 = B(7, 1), t72 = B(7, 2), t73 = B(7, 3), t74 = B(7, 4), t81 = B(8, 1), t82 = B(8, 2), t83 = B(8, 3), t84 = B(8, 4);
+
+// sons de UI, cada um no pico medido da batida
+window.CUES = [
+  [t11, 'click'], [t12, 'morph'], [t13, 'tick'], [t14, 'click'],
+  [t21, 'morph'], [t22, 'click'], [t23, 'pop'], [t24, 'morph'],
+  [t31, 'click'], [t32, 'tick'], [t33, 'morph'], [t34, 'press'],
+  [t41, 'tick', .45], [t42, 'release'], [t43, 'snap'], [t44, 'morph'],
+  [t51, 'click'], [t52, 'check'], [t53, 'notif'], [t54, 'morph', .6],
+  [t61, 'click'], [t62, 'pop'], [t63, 'tick'], [t64, 'tick2'],
+  [t71, 'morph'], [t72, 'tick'], [t73, 'click'], [t74, 'morph'],
+  [t81, 'thump'], [t82, 'tick', .5], [t84, 'morph'],
+];
+
+// ---------- DOM fixo ----------
+const frame = $('#frame'), world = $('#world'), shape = $('#shape'), cursor = $('#cursor');
+frame.style.width = W + 'px'; frame.style.height = H + 'px';
+const DAYS = [['Seg', 19], ['Ter', 20], ['Qua', 21], ['Qui', 22], ['Sex', 23], ['Sáb', 24], ['Dom', 25]];
+const SLOTS = ['12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'], BUSY = [2, 7];
+const DX = i => (i - 3) * 126, SX = j => (j - 4) * 100; // centros relativos ao centro da forma
+$('#l4').innerHTML = DAYS.map(([d, n], i) => `<div class="day${i == 6 ? ' off' : ''}" style="left:${490 + DX(i)}px"><i>${d}</i><b>${n}</b></div>`).join('');
+$('#l5').innerHTML = SLOTS.map((s, j) => `<div class="slot${BUSY.includes(j) ? ' busy' : ''}" style="left:${490 + SX(j)}px">${s}</div>`).join('');
+for (const id of ['l4', 'l5']) { const c = $('#' + id).cloneNode(true); c.id = id + 'i'; c.classList.add('inv'); $('#' + id).after(c); }
+const dayRect = i => [DX(i) - 52, -34, DX(i) + 52, 102], slotRect = j => [SX(j) - 56, 2, SX(j) + 56, 66];
+
+// grafico
+const NS = 'http://www.w3.org/2000/svg', svg = $('#chart');
+const X0 = 40, X1 = 864, Y0 = 24, Y1 = 316, cxp = i => X0 + i * (X1 - X0) / 5;
+const PROF = [[3, 4, 3, 5, 6, 7], [4, 4, 4, 6, 7, 8], [2, 3, 3, 3, 4, 6]], REV = [470, 560, 515, 725, 885, 1165];
+const yP = v => Y1 - v / 9 * (Y1 - Y0), yR = v => Y1 - v / 1200 * (Y1 - Y0);
+const LCOL = [INK, ACC, [185, 178, 167]], LORDER = [2, 0, 1];
+const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
+for (let k = 0; k < 4; k++) { const y = Y0 + k * (Y1 - Y0) / 3; el('line', { x1: 0, x2: 904, y1: y, y2: y, stroke: k == 3 ? '#E2DDD5' : '#F0ECE6', 'stroke-width': 2 }); }
+const area = el('path', { fill: '#151413' });
+const guide = el('line', { x1: cxp(3), x2: cxp(3), y1: Y0 - 8, y2: Y1, stroke: '#D9D3CA', 'stroke-width': 2 });
+const lines = [], dots = [];
+for (const k of LORDER) lines[k] = el('path', { fill: 'none', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1 });
+for (const k of LORDER) dots[k] = el('circle', { r: 7, cx: cxp(3), fill: '#fff', 'stroke-width': 3.5 });
+['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach((d, i) => { const e = el('text', { x: cxp(i), y: 364, 'text-anchor': 'middle', 'font-size': 20, fill: '#8A847B' }); e.textContent = d; });
+const f2 = n => n.toFixed(2);
+function smooth(p) {
+  let d = `M${f2(p[0][0])},${f2(p[0][1])}`;
+  for (let i = 0; i < p.length - 1; i++) {
+    const a = p[Math.max(i - 1, 0)], b = p[i], c = p[i + 1], e = p[Math.min(i + 2, p.length - 1)];
+    d += `C${f2(b[0] + (c[0] - a[0]) / 6)},${f2(b[1] + (c[1] - a[1]) / 6)},${f2(c[0] - (e[0] - b[0]) / 6)},${f2(c[1] - (e[1] - b[1]) / 6)},${f2(c[0])},${f2(c[1])}`;
+  }
+  return d;
+}
+
+const items = [...document.querySelectorAll('.item')], inis = items.map(i => i.firstElementChild);
+const letters = [...document.querySelectorAll('#wmText span')].slice(0, 7);
+let S, ITEM, PIP, CAM, SW, SH, SR, SC, SHADOW, CUR, CPRESS, DRAG, KNOB, TIPW, WMR;
+
+// ---------- medidas (texto real) e trilhas ----------
+function rel(e, L) {
+  const a = e.getBoundingClientRect(), b = L.getBoundingClientRect(), cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+  return { L: a.left - cx, T: a.top - cy, R: a.right - cx, B: a.bottom - cy, x: (a.left + a.right) / 2 - cx, y: (a.top + a.bottom) / 2 - cy, w: a.width, h: a.height };
+}
+const R4 = r => [r.L, r.T, r.R, r.B];
+function build() {
+  const size = id => [$(id).offsetWidth, $(id).offsetHeight];
+  S = { l1: size('#l1'), l2: size('#l2'), l3: size('#l3'), l3b: size('#l3b'), l6: size('#l6'), l7b: size('#l7b'), l8: size('#l8'), l9: [1000, 650] };
+  const rows = [...document.querySelectorAll('#l2 .row')].map(r => rel(r, $('#l2')));
+  const avs = [...document.querySelectorAll('#l3 .av')].map(a => rel(a, $('#l3')));
+  const big = rel($('#l3b .av'), $('#l3b'));
+  const radio = rel($('#radio2'), $('#l2'));
+
+  // pingo do i: varre o glifo "i" num canvas e encaixa a forma no lugar do pingo do "ı"
+  const cv = document.createElement('canvas'); cv.width = cv.height = 400;
+  const g = cv.getContext('2d'); g.font = '600 156px Geist'; g.fillText('i', 100, 300);
+  const px = g.getImageData(0, 0, 400, 400).data, ink = (x, y) => px[(y * 400 + x) * 4 + 3] > 127;
+  let top = -1, bot = -1, l = 400, r = 0, n = 0;
+  for (let y = 0; y < 300; y++) {
+    let any = false;
+    for (let x = 0; x < 400; x++) if (ink(x, y)) { any = true; if (top >= 0 && bot < 0) { l = Math.min(l, x); r = Math.max(r, x); n++; } }
+    if (any && top < 0) { top = y; for (let x = 0; x < 400; x++) if (ink(x, y)) { l = Math.min(l, x); r = Math.max(r, x); n++; } }
+    else if (!any && top >= 0 && bot < 0) { bot = y; break; }
+  }
+  const dw = r - l + 1, dh = bot - top, fill = n / (dw * dh);
+  const drad = Math.min(dw, dh) * Math.sqrt(Math.max(0, 1 - fill) / (4 - Math.PI));
+  const dl = $('#dotless'), dotX = dl.offsetLeft + (l + r + 1) / 2 - 100, dotY = $('#bl').offsetTop + (top + bot) / 2 - 300;
+  const wm = $('#wm'); wm.style.left = -dotX + 'px'; wm.style.top = -dotY + 'px';
+  WMR = { x: -dotX + wm.offsetWidth / 2, y: -dotY + wm.offsetHeight / 2, w: wm.offsetWidth, h: wm.offsetHeight };
+  const DOT = [dw, dh];
+
+  // forma
+  const st = {
+    btn: [...S.l1], list: S.l2, pros: S.l3, card: S.l3b, cal: [980, 300], conf: [...S.l6], load: [88, 88],
+    islc: [240, 64], isle: [S.l7b[0], 84], bub: S.l8, dash: S.l9, dot: DOT,
+  };
+  const SK = [[t84, 'btn'], [t12, 'list'], [t21, 'pros'], [t23, 'card'], [t24, 'cal'], [t44, 'conf'], [t51 + .08, 'load'], [t53, 'islc'], [t54, 'isle'], [t62, 'bub'], [t71, 'dash'], [t81, 'dot']];
+  // o colapso no pingo e mais rapido, para a forma chegar pequena quando vira ambar
+  SW = track(SK.map(([t, k]) => [t, st[k][0], k == 'dot' ? 21 : 15, .8]), 15, .8);
+  SH = track(SK.map(([t, k]) => [t, st[k][1], k == 'dot' ? 19 : 13, .8]), 13, .8);
+  const r4 = x => [x, x, x, x];
+  SR = track([[t84, r4(44)], [t12, r4(40)], [t21, r4(52)], [t23, r4(60)], [t24, r4(44)], [t44, r4(44)], [t53, r4(32)], [t54, r4(42)], [t62, [12, 40, 40, 40]], [t71, r4(44)], [t81, r4(drad)]], 15, .9);
+  SC = track([[t84, INK], [t12, PAPER], [t44, INK], [t52, ACC], [t53, INK], [t62, PAPER], [t81 + .2, ACC]], 34, 1);
+  SHADOW = track([[t81, 0], [t84, 1]], 14, 1);
+
+  // camera: cada estado preenche o quadro
+  const fz = ([w, h]) => Math.log(Math.min(W * FX / w, H * FY / h, ZMAX));
+  CAM = track([[t84 - .04, [0, 0, fz(st.btn)]], [t12 - .04, [0, 0, fz(st.list)]], [t21 - .04, [0, 0, fz(st.pros)]], [t23, [0, 0, fz(st.card)]],
+    [t24 - .04, [0, 0, fz(st.cal)]], [t44, [0, 0, fz(st.conf)]], [t53, [0, 0, fz(st.isle)]], [t62 - .04, [0, 0, fz(st.bub)]],
+    [t71 - .04, [0, 0, fz(st.dash)]], [t81, [WMR.x, WMR.y, fz([WMR.w, WMR.h])]]], 11, .92);
+
+  // itens: linhas -> avatares -> indicador de dia -> alca de horario
+  const Z0 = [0, 0, 0, 0];
+  ITEM = [0, 1, 2].map(k => {
+    const keys = [[t84, Z0, true], [t12 + .025 * k, R4(rows[k])], [t21 + .03 * k, R4(avs[k])]];
+    if (k == 1) keys.push([t23, R4(big)], [t24, dayRect(0)], [t31, dayRect(3)], [t33, slotRect(1)]);
+    else { const x = avs[k].x + (k ? 90 : -90), y = avs[k].y; keys.push([t23, [x, y, x, y]]); }
+    const col = [[t84, CHIP], [t21, AVG]];
+    if (k == 2) col.push([t13, HOVER]);
+    if (k == 1) col.push([t22, INK], [t43, ACC]);
+    return {
+      rect: liquid(keys),
+      rad: track([[t84, 0], [t12, 24], [t21, 64], ...(k == 1 ? [[t23, 84], [t24, 52], [t33, 32]] : [])], 16, .9),
+      col: track(col, 24, 1),
+      ini: track([[t84, INK], ...(k == 1 ? [[t22, WHITE]] : [])], 24, 1),
+      out: k == 1 ? t44 : t23 + .12,
+    };
+  });
+
+  // arraste: manipulacao direta entre t34 e t42, depois volta com mola ate o slot
+  const handle = slotRect(1), hx0 = (handle[0] + handle[2]) / 2;
+  const CK = [
+    [t83 + .22, [st.btn[0] * .24, 30], 10],
+    [t12 + .04, [radio.x + 4, radio.y + 8]],
+    [t21 + .06, [avs[1].x + 16, avs[1].y + 28]],
+    [t23 + .04, [big.x + 118, big.y + 150]],
+    [t24 + .04, [DX(3) + 10, 52]],
+    [t33 + .02, [hx0 + 6, 44]],
+    [t34 + .06, [SX(5) + 14, 44], 9.5],
+    [t41 + .04, [SX(4) + 18, 44], 10],
+    [t42 + .22, [SX(4) + 60, 150]],
+    [t44 + .04, [st.conf[0] * .26, 30]],
+    [t52 - .1, [86, 118]],
+    [t54 + .02, [st.isle[0] * .16, 12]],
+    [t62 + .06, [S.l8[0] / 2 - 40, S.l8[1] / 2 + 70]],
+    [t71 + .08, [48 + cxp(3) - 500 + 6, 214 + yP(6) - 325 + 8]],
+    [t72 + .06, [0, 0]], // preenchido depois de medir o toggle
+    [t74 + .02, [48 + cxp(3) - 500 + 90, 214 + yP(6) - 325 + 150]],
+    [t81 + .02, [1100, 1050], 7],
+  ];
+  const tg = [...document.querySelectorAll('#tog > span')], tog = $('#tog');
+  const tgR = tg.map(s => [s.offsetLeft, s.offsetLeft + s.offsetWidth]);
+  const tgc = rel(tg[1], $('#l9'));
+  CK[14][1] = [tgc.x + 8, tgc.y + 10];
+  CUR = track(CK.map(([t, p, w]) => [t, p, w ?? 11, .92]));
+  const CLICKS = [t11, t14, t22, t31, t51, t61, t73];
+  CPRESS = t => 1 - .16 * (CLICKS.reduce((s, c) => s + pulse(t, c - .03, c + .1), 0) + pulse(t, t34 - .03, t42));
+  KNOB = t => { const m = [sstep(mod(t) - t73, 12, .8), sstep(mod(t) - t73, 26, .8)]; return [lerp(tgR[0][0], tgR[1][0], m[0]), lerp(tgR[0][1], tgR[1][1], m[1])]; };
+  window.TOGW = tog.offsetWidth;
+  const tw = [$('#tipA').offsetWidth, $('#tipB').offsetWidth];
+  TIPW = t => lerp(tw[0], tw[1], sstep(mod(t) - t74, 18, .9));
+
+  const curX0 = CUR(t34)[0], tR = t42, eps = 1e-3;
+  const xAt = t => hx0 + CUR(t)[0] - curX0;
+  const xr = xAt(tR), vr = (xAt(tR) - xAt(tR - eps)) / eps;
+  const free = SLOTS.map((_, j) => j).filter(j => !BUSY.includes(j));
+  const snap = free.reduce((a, j) => Math.abs(SX(j) - xr) < Math.abs(SX(a) - xr) ? j : a, free[0]);
+  console.assert(SLOTS[snap] === '14:30', 'arraste deveria encaixar em 14:30, encaixou em', SLOTS[snap]);
+  const lead = vr < 0 ? [26, 12] : [12, 26];
+  DRAG = t => {
+    if (t >= t34 && t < tR) { const x = xAt(t); return [x - 56, 2, x + 56, 66]; }
+    if (t >= tR && t < t84) {
+      const g = SX(snap), d = t - tR;
+      return [g - 56 + siv(d, xr - g, vr, lead[0], .8), 2, g + 56 + siv(d, xr - g, vr, lead[1], .8), 66];
+    }
+    return null;
+  };
+}
+
+// ---------- seek(t): todo estilo sai daqui ----------
+const px = n => n.toFixed(2) + 'px';
+function seek(t) {
+  t = mod(t);
+  const [ccx, ccy, lz] = CAM(t), z = Math.exp(lz);
+  world.style.transform = `translate(${px(W / 2)},${px(H / 2)}) scale(${z.toFixed(5)}) translate(${px(-ccx)},${px(-ccy)})`;
+
+  const w = SW(t), h = SH(t), sh = SHADOW(t);
+  const press = 1 - .05 * (pulse(t, t11, t11 + .1) + pulse(t, t51, t51 + .08) + pulse(t, t61, t61 + .1)) + .05 * pulse(t, t52, t52 + .07, 30, 20);
+  Object.assign(shape.style, {
+    left: px(-w / 2), top: px(-h / 2), width: px(w), height: px(h),
+    borderRadius: SR(t).map(r => px(Math.max(r, 0))).join(' '), background: rgb(SC(t)), transform: `scale(${press.toFixed(5)})`,
+    boxShadow: `0 1px 2px rgba(21,20,19,${(.06 * sh).toFixed(3)}),0 18px 44px -14px rgba(21,20,19,${(.2 * sh).toFixed(3)})`,
+  });
+
+  ITEM.forEach((it, k) => {
+    const [L, Tp, R, Bt] = (k == 1 && DRAG(t)) || it.rect(t), e = items[k];
+    const iw = Math.max(R - L, 0), ih = Math.max(Bt - Tp, 0);
+    Object.assign(e.style, { left: px(L), top: px(Tp), width: px(iw), height: px(ih), borderRadius: px(Math.max(it.rad(t), 0)), background: rgb(it.col(t)), opacity: pres(t, t12 + .08, it.out, 20).toFixed(4) });
+    inis[k].style.fontSize = px(ih * .34);
+    inis[k].style.color = rgb(it.ini(t));
+    inis[k].style.opacity = pres(t, t21 + .08, k == 1 ? t24 : t23).toFixed(4);
+    if (k == 1) PIPR = [L, Tp, R, Bt, Math.max(it.rad(t), 0)];
+  });
+
+  fade($('#l1'), pres(t, t84 + .12, T + t12));
+  fade($('#l2'), pres(t, t12 + .1, t21));
+  const rd = sstep(t - t14, 24, .65);
+  $('#rdot').style.transform = `scale(${rd.toFixed(4)})`;
+  fade($('#l3'), pres(t, t21 + .12, t23));
+  fade($('#l3b'), pres(t, t23 + .14, t24));
+  fade($('#ttlA'), pres(t, t24 + .12, t32 - .06));
+  fade($('#ttlB'), pres(t, t32 + .02, t44));
+  fade($('#capA'), pres(t, t24 + .15, t33));
+  fade($('#capB'), pres(t, t33 + .15, t44));
+  const p4 = pres(t, t24 + .12, t33), p5 = pres(t, t33 + .12, t44);
+  fade($('#l4'), p4); fade($('#l4i'), p4); fade($('#l5'), p5); fade($('#l5i'), p5);
+  const [L, Tp, R, Bt, rr] = PIPR, clip = `inset(${px(Tp + 150)} ${px(490 - R)} ${px(150 - Bt)} ${px(L + 490)} round ${px(rr)})`;
+  $('#l4i').style.clipPath = clip; $('#l5i').style.clipPath = clip;
+
+  fade($('#l6'), pres(t, t44 + .12, t51 + .06));
+  fade($('#l6b'), pres(t, t51 + .12, t53));
+  const arc = $('#arc'), chk = $('#chk');
+  arc.style.opacity = pres(t, t51 + .1, t52 + .02, 30, 50).toFixed(4);
+  arc.setAttribute('transform', `rotate(${(t * 560 % 360).toFixed(2)} 44 44)`);
+  const ck = sstep(t - t52, 18, 1);
+  chk.style.strokeDasharray = `${ck.toFixed(4)} 1`;
+  chk.style.opacity = ck > .001 && t < t53 + .2 ? 1 : 0;
+
+  fade($('#l7a'), pres(t, t53 + .1, t54));
+  fade($('#l7b'), pres(t, t54 + .1, t62));
+  fade($('#l8'), pres(t, t62 + .12, t71));
+  const tc = rgb(mix(MUTED, ACC, sstep(t - t64, 24, 1)));
+  $('#tk1').style.stroke = tc; $('#tk2').style.stroke = tc;
+  const k2 = sstep(t - t63, 22, 1);
+  $('#tk2').style.strokeDasharray = `${k2.toFixed(4)} 1`;
+  $('#tk2').style.opacity = k2 > .001 ? 1 : 0;
+
+  // dashboard
+  fade($('#l9'), pres(t, t71 + .07, t81));
+  fade($('#t9a'), pres(t, t71 + .12, t73 + .02)); fade($('#t9b'), pres(t, t73 + .08, t81));
+  fade($('#k9a'), pres(t, t71 + .14, t73 + .04)); fade($('#k9b'), pres(t, t73 + .1, t81));
+  fade($('#leg'), pres(t, t71 + .2, t73 + .05));
+  const [kl, kr] = KNOB(t);
+  Object.assign($('#knob').style, { left: px(kl), width: px(kr - kl) });
+  $('#togInv').style.clipPath = `inset(6px ${px(TOGW - kr)} 6px ${px(kl)} round 22px)`;
+  let topY = Infinity;
+  for (let k = 0; k < 3; k++) {
+    const m = sstep(t - (t73 + .08 + .04 * k), 13, .82), d = sstep(t - (t71 + .1 + .05 * k), 11, 1);
+    const pts = PROF[k].map((v, i) => [cxp(i), lerp(yP(v), yR(REV[i]), m)]);
+    lines[k].setAttribute('d', smooth(pts));
+    lines[k].style.strokeDasharray = d > .9995 ? 'none' : `${d.toFixed(4)} 1`;
+    const c = rgb(mix(LCOL[k], INK, m));
+    lines[k].style.stroke = c;
+    dots[k].setAttribute('cy', f2(pts[3][1])); dots[k].style.stroke = c;
+    topY = Math.min(topY, pts[3][1]);
+  }
+  const rp = REV.map((v, i) => [cxp(i), yR(v)]);
+  area.setAttribute('d', smooth(rp) + `L${X1},${Y1}L${X0},${Y1}Z`);
+  area.style.fillOpacity = (.06 * pres(t, t74 + .04, t81)).toFixed(4);
+  const ph = pres(t, t72, t81);
+  guide.style.opacity = ph.toFixed(4);
+  dots.forEach(d => { d.style.opacity = ph.toFixed(4); d.setAttribute('r', f2(7 * sstep(t - t72, 22, .7))); });
+  const tw = TIPW(t);
+  Object.assign($('#tip').style, { width: px(tw), left: px(48 + cxp(3) - tw / 2), top: px(214 + topY - 26 - 44) });
+  fade($('#tip'), ph, 8);
+  fade($('#tipA'), pres(t, t72, t74 - .04), 6); fade($('#tipB'), pres(t, t74 + .05, t81), 6);
+
+  // wordmark: o pingo do i e a propria forma
+  letters.forEach((e, i) => {
+    const p = pres(t, t81 + .05 + .028 * i, t84 + .015 * Math.abs(i - 5));
+    fade(e, p, 16); e.style.transform = `translateY(${px((1 - p) * 18)})`;
+  });
+  fade($('#tag'), pres(t, t82, t84 + .02));
+
+  // cursor: posicao no mundo projetada pela camera
+  const [cx, cy] = CUR(t), sx = W / 2 + (cx - ccx) * z, sy = H / 2 + (cy - ccy) * z;
+  const cs = 46 * Math.pow(z / 1.5, .4);
+  Object.assign(cursor.style, {
+    width: px(cs), height: px(cs), transformOrigin: `${5.5 / 24 * 100}% ${3.2 / 24 * 100}%`,
+    transform: `translate(${px(sx - 5.5 / 24 * cs)},${px(sy - 3.2 / 24 * cs)}) scale(${CPRESS(t).toFixed(4)})`,
+  });
+
+  if (Q.has('label')) { const i = BEATS.findLastIndex(b => b <= t + 1e-6); const d = $('#dbg'); d.hidden = false; d.textContent = `${Math.floor(i / 4) + 1}.${i % 4 + 1}  t=${t.toFixed(2)}`; }
+}
+let PIPR = [0, 0, 0, 0, 0];
+window.probe = t => [...CUR(t), ...CAM(t), SW(t), SH(t)];
+
+(async () => {
+  await Promise.all(['400', '500', '600'].map(wt => document.fonts.load(`${wt} 30px Geist`, 'Agendar horário ı')));
+  await document.fonts.ready;
+  build();
+  window.seek = seek;
+  seek(0);
+  window.__ready = true;
+  if (!RENDER) {
+    const fit = () => frame.style.transform = `scale(${Math.min(innerWidth / W, innerHeight / H)})`;
+    fit(); addEventListener('resize', fit);
+    const t0 = performance.now();
+    const loop = now => { seek((now - t0) / 1000); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+</body>
+</html>
