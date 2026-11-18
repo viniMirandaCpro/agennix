@@ -8,6 +8,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app.extensions import db
 from app.models.mixins import TenantMixin, TimestampMixin
 
+ROLES = ("administrador", "atendente", "profissional")
+
 
 class User(UserMixin, TenantMixin, TimestampMixin, db.Model):
     __tablename__ = "users"
@@ -21,10 +23,12 @@ class User(UserMixin, TenantMixin, TimestampMixin, db.Model):
     last_login_at = db.Column(db.DateTime(timezone=True))
 
     tenant = db.relationship("Tenant")
+    # Perfil profissional: o vinculo mora em professionals.user_id
+    professional = db.relationship("Professional", uselist=False)
 
     __table_args__ = (
         db.CheckConstraint(
-            "role IN ('administrador','atendente','profissional')", name="ck_users_role"
+            "role IN ({})".format(",".join(f"'{r}'" for r in ROLES)), name="ck_users_role"
         ),
     )
 
