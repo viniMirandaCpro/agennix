@@ -5,6 +5,7 @@ from app.resources.clients import ClientList
 from app.resources.professionals import ProfessionalItem, ProfessionalList
 from app.resources.public_booking import PublicAvailability, PublicBooking, PublicInfo
 from app.resources.services import ServiceItem, ServiceList
+from app.resources.users import UserItem, UserList
 
 
 def register_resources(api):
@@ -16,6 +17,8 @@ def register_resources(api):
     api.add_resource(ProfessionalList, "/professionals")
     api.add_resource(ProfessionalItem, "/professionals/<int:professional_id>")
     api.add_resource(ClientList, "/clients")
+    api.add_resource(UserList, "/users")
+    api.add_resource(UserItem, "/users/<int:user_id>")
     api.add_resource(AppointmentList, "/appointments")
     api.add_resource(AppointmentItem, "/appointments/<int:appointment_id>")
     api.add_resource(PublicInfo, "/public/<string:slug>")

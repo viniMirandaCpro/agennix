@@ -18,14 +18,22 @@ def seed_command():
     db.session.add(tenant)
     db.session.flush()
 
-    admin = User(tenant_id=tenant.id, name="Administrador", email="admin@agennix.dev")
-    admin.set_password("agennix123")
-    db.session.add(admin)
+    carlos, marina = (
+        Professional(tenant_id=tenant.id, name=name, working_hours=default_week(tenant.id))
+        for name in ("Carlos", "Marina")
+    )
+    db.session.add_all([carlos, marina])
 
-    for name in ("Carlos", "Marina"):
-        db.session.add(
-            Professional(tenant_id=tenant.id, name=name, working_hours=default_week(tenant.id))
-        )
+    # Um login por perfil (Historia 5.5); Carlos ve so a propria agenda
+    for name, email, role, professional in (
+        ("Administrador", "admin@agennix.dev", "administrador", None),
+        ("Atendente", "atendente@agennix.dev", "atendente", None),
+        ("Carlos", "carlos@agennix.dev", "profissional", carlos),
+    ):
+        user = User(tenant_id=tenant.id, name=name, email=email, role=role, professional=professional)
+        user.set_password("agennix123")
+        db.session.add(user)
+
     for name, minutes, price in (
         ("Corte", 30, "45.00"),
         ("Barba", 30, "35.00"),
@@ -36,4 +44,7 @@ def seed_command():
         )
 
     db.session.commit()
-    click.echo("Seed aplicado: login admin@agennix.dev / agennix123, link publico /agendar/demo")
+    click.echo(
+        "Seed aplicado: logins admin@, atendente@ e carlos@agennix.dev / agennix123,"
+        " link publico /agendar/demo"
+    )
