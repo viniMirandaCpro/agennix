@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from app.extensions import db
 from app.models import Appointment, Client, Notification
 from app.services.sms_service import message_for, send_sms
+from app.tasks.reminders import run_once
 from tests.test_appointments import book
 from tests.test_public_booking import public_book
 
@@ -148,3 +149,117 @@ def test_conflicting_public_booking_leaves_no_notification(client, professional,
     assert public_book(client, professional, service).status_code == 201
     assert public_book(client, professional, service, whatsapp="11912345678").status_code == 409
     assert Notification.query.count() == 1
+
+
+def fake_sender(monkeypatch, fail_for=()):
+    """Substitui o envio do job: grava (numero, texto) e falha para os numeros em fail_for."""
+    sent = []
+
+    def fake(to, body):
+        if to in fail_for:
+            raise ConnectionError("Twilio fora do ar")
+        sent.append((to, body))
+        return f"SM{len(sent)}"
+
+    monkeypatch.setattr("app.tasks.reminders.send_sms", fake)
+    return sent
+
+
+@pytest.fixture
+def sent(monkeypatch):
+    return fake_sender(monkeypatch)
+
+
+def test_reminder_is_queued_and_sent_once(sent, tenant, professional, service, customer):
+    appt = make_appt(tenant, professional, service, customer, NOW + timedelta(hours=1))
+    run_once(NOW)
+    run_once(NOW)
+    assert len(sent) == 1
+    assert sent[0][0] == "+5511987654321" and "lembrete" in sent[0][1]
+    n = Notification.query.one()
+    assert (n.type, n.channel, n.status, n.provider_message_id, n.attempts) == ("lembrete", "sms", "enviada", "SM1", 1)
+    assert n.scheduled_for == appt.starts_at - timedelta(hours=2)
+    assert n.sent_at == NOW
+
+
+def test_no_reminder_outside_window(sent, tenant, professional, service, customer):
+    make_appt(tenant, professional, service, customer, NOW + timedelta(hours=3))
+    run_once(NOW)
+    assert sent == [] and Notification.query.count() == 0
+
+
+def test_no_reminder_when_booked_inside_window(sent, tenant, professional, service, customer):
+    make_appt(tenant, professional, service, customer, NOW + timedelta(hours=1), created_at=NOW - timedelta(minutes=30))
+    run_once(NOW)
+    assert sent == [] and Notification.query.count() == 0
+
+
+def test_no_reminder_for_cancelled(sent, tenant, professional, service, customer):
+    make_appt(tenant, professional, service, customer, NOW + timedelta(hours=1), status="cancelado")
+    run_once(NOW)
+    assert sent == [] and Notification.query.count() == 0
+
+
+def test_no_reminder_for_started_appointment(sent, tenant, professional, service, customer):
+    make_appt(tenant, professional, service, customer, NOW - timedelta(minutes=10))
+    run_once(NOW)
+    assert sent == [] and Notification.query.count() == 0
+
+
+def test_no_reminder_for_client_without_phone(sent, tenant, professional, service):
+    no_phone = Client(tenant_id=tenant.id, name="Ana", email="ana@x.dev")
+    db.session.add(no_phone)
+    make_appt(tenant, professional, service, no_phone, NOW + timedelta(hours=1))
+    run_once(NOW)
+    assert sent == [] and Notification.query.count() == 0
+
+
+def test_confirmation_is_sent_by_job(sent, client, professional, service):
+    public_book(client, professional, service)
+    run_once()
+    assert len(sent) == 1 and "confirmado" in sent[0][1]
+    assert Notification.query.one().status == "enviada"
+
+
+def test_cancelled_before_confirmation_is_not_sent(sent, client, professional, service):
+    public_book(client, professional, service)
+    Appointment.query.one().status = "cancelado"
+    db.session.commit()
+    run_once()
+    n = Notification.query.one()
+    assert sent == []
+    assert (n.status, n.error_message) == ("falhou", "Agendamento cancelado")
+
+
+def test_failure_retries_then_gives_up(monkeypatch, tenant, professional, service, customer):
+    fake_sender(monkeypatch, fail_for={"+5511987654321"})
+    make_appt(tenant, professional, service, customer, NOW + timedelta(hours=1))
+    run_once(NOW)
+    n = Notification.query.one()
+    assert (n.status, n.attempts, n.error_message) == ("pendente", 1, "Twilio fora do ar")
+    run_once(NOW)
+    run_once(NOW)
+    assert (n.status, n.attempts) == ("falhou", 3)
+
+
+def test_one_failure_does_not_block_others(monkeypatch, tenant, professional, service, customer):
+    sent = fake_sender(monkeypatch, fail_for={"+5511987654321"})
+    other = Client(tenant_id=tenant.id, name="Pedro", whatsapp="+5511912345678")
+    db.session.add(other)
+    first = make_appt(tenant, professional, service, customer, NOW + timedelta(hours=1))
+    second = make_appt(tenant, professional, service, other, NOW + timedelta(hours=1, minutes=30))
+    run_once(NOW)
+    by_appt = {n.appointment_id: n for n in Notification.query}
+    assert (by_appt[first.id].status, by_appt[first.id].attempts) == ("pendente", 1)
+    assert by_appt[second.id].status == "enviada"
+    assert [to for to, _ in sent] == ["+5511912345678"]
+
+
+def test_moved_after_reminder_is_not_reminded_again(sent, tenant, professional, service, customer):
+    appt = make_appt(tenant, professional, service, customer, NOW + timedelta(hours=1))
+    run_once(NOW)
+    appt.starts_at = NOW + timedelta(hours=1, minutes=30)
+    appt.ends_at = appt.starts_at + timedelta(minutes=30)
+    db.session.commit()
+    run_once(NOW)
+    assert len(sent) == 1
