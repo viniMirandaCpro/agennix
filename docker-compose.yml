@@ -33,6 +33,21 @@ services:
         condition: service_healthy
     command: flask run --host=0.0.0.0 --port=5000 --debug
 
+  # Envia os SMS de confirmacao e lembrete. Um processo so: dois mandariam SMS em dobro.
+  scheduler:
+    build: ./backend
+    container_name: agennix-scheduler
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - /app/venv
+    depends_on:
+      db:
+        condition: service_healthy
+    command: flask scheduler
+
   frontend:
     build: ./frontend
     container_name: agennix-frontend
@@ -49,18 +64,5 @@ services:
       - backend
     command: npm run dev
 
-  # Descomente quando for implementar a historia de lembretes no WhatsApp.
-  # evolution-api:
-  #   image: atendai/evolution-api:latest
-  #   container_name: agennix-evolution
-  #   restart: unless-stopped
-  #   environment:
-  #     AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
-  #   ports:
-  #     - "8080:8080"
-  #   volumes:
-  #     - evolution_instances:/evolution/instances
-
 volumes:
   pgdata:
-  # evolution_instances:

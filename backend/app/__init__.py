@@ -32,6 +32,8 @@ def create_app(config_object="config.DevConfig"):
     register_resources(api)
 
     from app.seed import seed_command
+    from app.tasks import scheduler_command
 
     app.cli.add_command(seed_command)
+    app.cli.add_command(scheduler_command)
     return app

@@ -97,7 +97,7 @@ export default function AppointmentForm({ appointment, professionals, services, 
             <div className="space-y-2">
               <input className="input" placeholder="Nome" aria-label="Nome do cliente" required
                 value={clientName} onChange={(e) => setClientName(e.target.value)} />
-              <input className="input" placeholder="WhatsApp (11) 91234-5678" aria-label="WhatsApp do cliente"
+              <input className="input" placeholder="Celular (11) 91234-5678" aria-label="Celular do cliente"
                 inputMode="tel" required value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
               <button type="button" className="text-sm text-indigo-600 hover:underline" onClick={() => setNewClient(false)}>
                 Buscar cliente cadastrado
@@ -105,7 +105,7 @@ export default function AppointmentForm({ appointment, professionals, services, 
             </div>
           ) : (
             <div className="space-y-2">
-              <input className="input" placeholder="Buscar por nome ou WhatsApp" aria-label="Buscar cliente"
+              <input className="input" placeholder="Buscar por nome ou celular" aria-label="Buscar cliente"
                 value={query} onChange={(e) => setQuery(e.target.value)} />
               {results.length > 0 && (
                 <ul className="max-h-40 divide-y divide-gray-100 overflow-y-auto rounded-md border border-gray-200">

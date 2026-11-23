@@ -2,14 +2,14 @@
 
 Sistema de agendamento para estabelecimentos de servico por hora marcada —
 barbearias, saloes, clinicas, estudios, consultorios. SaaS multi-tenant com
-lembretes automaticos no WhatsApp, dashboards operacional e financeiro, API
+lembretes automaticos por SMS, dashboards operacional e financeiro, API
 para integradores e landing page de vendas.
 
 > **Status:** MVP implementado - login, cadastro de profissionais (com
 > expediente) e servicos, agenda do painel, agendamento publico pelo link
-> `/agendar/{slug}` e perfis de acesso (RBAC) com cadastro de usuarios. As
-> demais historias (WhatsApp, financeiro, pacotes, planos, API keys, landing
-> page) seguem como `TODO` nos arquivos.
+> `/agendar/{slug}`, perfis de acesso (RBAC) com cadastro de usuarios e
+> confirmacao/lembrete por SMS (Twilio). As demais historias (financeiro,
+> pacotes, planos, API keys, landing page) seguem como `TODO` nos arquivos.
 
 ## Modelagem do banco
 
@@ -24,7 +24,7 @@ cada criterio de aceitacao ate a tabela/coluna que o atende.
 | Backend | Flask 3.1, Flask-RESTful, Flask-SQLAlchemy, Flask-Migrate (Alembic) |
 | Banco | PostgreSQL 16 |
 | Autenticacao | Flask-Login (sessao, para o painel) + API key por header (para integradores) |
-| Agendador | APScheduler (lembretes de WhatsApp via Evolution API) |
+| Agendador | APScheduler (lembretes por SMS via Twilio) |
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
 | Infra dev | Docker Compose |
 
@@ -52,7 +52,7 @@ composta `(tenant_id, id)`.
 
 ```
 agennix/
-├── docker-compose.yml       # postgres + backend + frontend
+├── docker-compose.yml       # postgres + backend + scheduler + frontend
 ├── backend/
 │   ├── config.py            # Config por ambiente
 │   ├── wsgi.py              # entrypoint do gunicorn
@@ -107,6 +107,32 @@ docker compose exec backend flask seed
 > caso use `BACKEND_PORT=5001` no `.env` (o frontend do compose acompanha).
 > Se a 5432 tambem estiver em uso, troque `POSTGRES_PORT`.
 
+O `docker compose up` tambem sobe o servico `scheduler` (`flask scheduler`),
+que a cada minuto cria os lembretes da janela e envia os SMS pendentes.
+
+### SMS (Twilio)
+
+Funcionamento, operacao, decisoes e pendencias: **[docs/sms.md](docs/sms.md)**.
+
+A confirmacao sai quando o cliente agenda pelo link publico; o lembrete sai
+`REMINDER_HOURS_BEFORE` horas (padrao 2) antes de qualquer agendamento. Sem
+credenciais, as mensagens ficam em `notifications` com o erro
+`Twilio não configurado` e viram `falhou` na 3a tentativa.
+
+1. Crie uma conta de teste em twilio.com e pegue um numero de envio.
+2. Em *Verified Caller IDs*, verifique o celular que vai receber os testes
+   (a conta de teste so envia para numeros verificados).
+3. Em *Messaging > Settings > Geo Permissions*, libere o Brasil.
+4. Preencha `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` e,
+   se quiser, `REMINDER_HOURS_BEFORE` em `backend/.env`.
+5. `docker compose up -d scheduler` (recria o container com o `.env` novo;
+   `restart` mantem as variaveis antigas)
+
+A conta de teste do Twilio so envia os modelos prontos dele (`sms_appointment_reminders`
+etc.) e recusa o texto do Agennix com "Trial accounts can only use predefined SMS
+templates". Para os SMS de verdade, faca o upgrade da conta. Para conferir o que saiu:
+`docker compose exec db psql -U agennix -c "select type,status,attempts,error_message from notifications"`.
+
 ### Testes
 
 ```bash
@@ -133,7 +159,6 @@ local (`@localhost:5432` em vez de `@db:5432`).
 
 ## Proximo passo
 
-Com agendamento e perfis de pe, a proxima historia natural e a
-confirmacao/lembrete por WhatsApp (5.3 e o criterio 3 da 5.12), que ja tem
-tabela desenhada em `docs/modelagem.md`. Depois dela, o dashboard financeiro
-(5.6) ja pode usar `roles_required("administrador")`.
+Com agendamento, perfis e SMS de pe, a proxima historia e o dashboard
+financeiro (5.6): ja pode usar `roles_required("administrador")`, mas antes
+precisa dos modelos `payments` e `expenses` desenhados em `docs/modelagem.md`.
