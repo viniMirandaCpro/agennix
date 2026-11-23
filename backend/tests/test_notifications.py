@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
 from app.models import Appointment, Client, Notification
+from app.services.sms_service import message_for, send_sms
 
 NOW = datetime(2026, 11, 30, 12, 0, tzinfo=timezone.utc)
 
@@ -63,3 +64,66 @@ def test_channel_rejects_whatsapp(tenant, professional, service, customer):
     with pytest.raises(IntegrityError):
         notify(appt, channel="whatsapp")
     db.session.rollback()
+
+
+class FakeResponse:
+    def __init__(self, ok, payload):
+        self.ok, self._payload, self.text = ok, payload, str(payload)
+
+    def json(self):
+        return self._payload
+
+
+@pytest.fixture
+def twilio(app, monkeypatch):
+    """Credenciais de mentira e requests.post gravando as chamadas."""
+    app.config.update(TWILIO_ACCOUNT_SID="AC1", TWILIO_AUTH_TOKEN="tok", TWILIO_FROM_NUMBER="+15550001111")
+    calls, reply = [], {"response": FakeResponse(True, {"sid": "SM123"})}
+
+    def fake_post(url, **kw):
+        calls.append((url, kw))
+        return reply["response"]
+
+    monkeypatch.setattr("app.services.sms_service.requests.post", fake_post)
+    return calls, reply
+
+
+def test_send_sms_posts_to_twilio(twilio):
+    calls, _ = twilio
+    assert send_sms("+5511987654321", "oi") == "SM123"
+    url, kw = calls[0]
+    assert url == "https://api.twilio.com/2010-04-01/Accounts/AC1/Messages.json"
+    assert kw["auth"] == ("AC1", "tok")
+    assert kw["data"] == {"From": "+15550001111", "To": "+5511987654321", "Body": "oi"}
+    assert kw["timeout"] == 10
+
+
+def test_send_sms_raises_twilio_error(twilio):
+    _, reply = twilio
+    reply["response"] = FakeResponse(False, {"message": "The number is unverified"})
+    with pytest.raises(RuntimeError, match="unverified"):
+        send_sms("+5511987654321", "oi")
+
+
+def test_send_sms_without_credentials(twilio, app):
+    calls, _ = twilio
+    app.config.update(TWILIO_ACCOUNT_SID="")
+    with pytest.raises(RuntimeError, match="Twilio não configurado"):
+        send_sms("+5511987654321", "oi")
+    assert calls == []
+
+
+def test_message_has_five_fields_without_accents(tenant, professional, service, customer):
+    tenant.name, professional.name, customer.name = "Barbearia São Jorge", "João", "Ana Lúcia"
+    appt = make_appt(tenant, professional, service, customer, datetime(2026, 11, 30, 13, 0, tzinfo=timezone.utc))
+    assert message_for(notify(appt, "confirmacao")) == (
+        "Barbearia Sao Jorge: Ola Ana, seu horario de Corte com Joao esta confirmado para 30/11 as 10:00."
+    )
+    assert message_for(notify(appt, "lembrete")) == (
+        "Barbearia Sao Jorge: Ola Ana, lembrete: Corte com Joao em 30/11 as 10:00."
+    )
+
+
+def test_message_uses_tenant_timezone(tenant, professional, service, customer):
+    appt = make_appt(tenant, professional, service, customer, datetime(2026, 12, 1, 2, 30, tzinfo=timezone.utc))
+    assert message_for(notify(appt, "lembrete")).endswith("em 30/11 as 23:30.")
