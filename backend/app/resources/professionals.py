@@ -5,6 +5,7 @@ O 'working_hours' enviado substitui o expediente inteiro.
 from flask_login import current_user, login_required
 from flask_restful import Resource
 
+from app.auth.rbac import roles_required
 from app.extensions import db
 from app.models import Professional, WorkingHours
 from app.models.working_hours import default_week
@@ -30,6 +31,7 @@ class ProfessionalList(Resource):
     def get(self):
         return [dump_professional(p) for p in scoped(Professional).order_by(Professional.name)]
 
+    @roles_required("administrador")
     def post(self):
         tenant_id = current_user.tenant_id
         p = Professional(tenant_id=tenant_id, working_hours=default_week(tenant_id))
@@ -42,6 +44,7 @@ class ProfessionalList(Resource):
 class ProfessionalItem(Resource):
     method_decorators = [login_required]
 
+    @roles_required("administrador")
     def put(self, professional_id):
         p = get_owned(Professional, professional_id)
         _apply(p, load_professional(json_body(), partial=True))

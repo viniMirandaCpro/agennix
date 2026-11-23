@@ -6,9 +6,10 @@ lembretes automaticos no WhatsApp, dashboards operacional e financeiro, API
 para integradores e landing page de vendas.
 
 > **Status:** MVP implementado - login, cadastro de profissionais (com
-> expediente) e servicos, agenda do painel e agendamento publico pelo link
-> `/agendar/{slug}`. As demais historias (RBAC, WhatsApp, financeiro, pacotes,
-> planos, API keys, landing page) seguem como `TODO` nos arquivos.
+> expediente) e servicos, agenda do painel, agendamento publico pelo link
+> `/agendar/{slug}` e perfis de acesso (RBAC) com cadastro de usuarios. As
+> demais historias (WhatsApp, financeiro, pacotes, planos, API keys, landing
+> page) seguem como `TODO` nos arquivos.
 
 ## Modelagem do banco
 
@@ -92,7 +93,13 @@ docker compose exec backend flask db upgrade
 docker compose exec backend flask seed
 ```
 
-- Painel: http://localhost:3000/login - `admin@agennix.dev` / `agennix123`
+- Painel: http://localhost:3000/login - senha `agennix123` para os tres perfis:
+
+  | Login | Perfil | O que acessa |
+  |---|---|---|
+  | `admin@agennix.dev` | Administrador | Tudo, inclusive cadastros e usuarios (Configuracoes) |
+  | `atendente@agennix.dev` | Atendente | Agenda completa |
+  | `carlos@agennix.dev` | Profissional | So a propria agenda, sem editar |
 - Link publico de agendamento: http://localhost:3000/agendar/demo
 - API: http://localhost:5000/api
 
@@ -126,6 +133,7 @@ local (`@localhost:5432` em vez de `@db:5432`).
 
 ## Proximo passo
 
-Com o MVP de agendamento de pe, as proximas historias naturais sao o RBAC
-(perfis administrador/atendente/profissional) e a confirmacao/lembrete por
-WhatsApp, que ja tem tabela desenhada em `docs/modelagem.md`.
+Com agendamento e perfis de pe, a proxima historia natural e a
+confirmacao/lembrete por WhatsApp (5.3 e o criterio 3 da 5.12), que ja tem
+tabela desenhada em `docs/modelagem.md`. Depois dela, o dashboard financeiro
+(5.6) ja pode usar `roles_required("administrador")`.

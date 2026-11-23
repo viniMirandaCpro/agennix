@@ -1,19 +1,23 @@
 "use client";
 
 // Guarda de sessao do painel: sem sessao valida, volta para /login (Historia 5.1).
-// ponytail: sem RBAC no MVP - todo usuario logado ve todos os itens do menu.
+// Menu por perfil (Historia 5.5); a garantia de acesso e do backend (403).
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { SessionContext } from "@/components/dashboard/session";
 import { logout, me } from "@/lib/auth";
-import type { Session } from "@/lib/types";
+import type { Role, Session } from "@/lib/types";
+
+const ALL: Role[] = ["administrador", "atendente", "profissional"];
+const ADMIN: Role[] = ["administrador"];
 
 const NAV = [
-  { href: "/agendamentos", label: "Agendamentos" },
-  { href: "/profissionais", label: "Profissionais" },
-  { href: "/servicos", label: "Serviços" },
+  { href: "/agendamentos", label: "Agendamentos", roles: ALL },
+  { href: "/profissionais", label: "Profissionais", roles: ADMIN },
+  { href: "/servicos", label: "Serviços", roles: ADMIN },
+  { href: "/configuracoes", label: "Configurações", roles: ADMIN },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -27,12 +31,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .catch(() => router.replace("/login"));
   }, [router]);
 
+  const nav = session ? NAV.filter((item) => item.roles.includes(session.user.role)) : [];
+  const forbidden = !!session && NAV.some((item) => pathname.startsWith(item.href) && !nav.includes(item));
+
+  useEffect(() => {
+    if (forbidden) router.replace("/agendamentos");
+  }, [forbidden, router]);
+
   async function onLogout() {
     await logout().catch(() => {});
     router.replace("/login");
   }
 
-  if (!session) {
+  if (!session || forbidden) {
     return <p className="p-8 text-sm text-gray-500">Carregando...</p>;
   }
 
@@ -50,7 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           </div>
           <nav className="flex gap-1 overflow-x-auto px-2 pb-2 md:flex-col md:pb-0">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

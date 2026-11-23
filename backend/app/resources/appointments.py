@@ -1,6 +1,7 @@
 """CRUD de agendamentos pelo painel (Historias 5.2, 5.8 e 5.4).
 
 Nao ha exclusao fisica: cancelar = PUT com status 'cancelado'.
+Perfil profissional (Historia 5.5): so le, e so os proprios atendimentos.
 """
 from datetime import time, timedelta
 
@@ -9,6 +10,7 @@ from flask_login import current_user, login_required
 from flask_restful import Resource
 from sqlalchemy.orm import joinedload
 
+from app.auth.rbac import own_professional_id, roles_required
 from app.models import Appointment, Client
 from app.schemas import json_body, parse_date, parse_int, require
 from app.schemas.appointment import dump_appointment, load_appointment
@@ -35,6 +37,8 @@ class AppointmentList(Resource):
         for field in ("professional_id", "service_id"):
             if args.get(field):
                 q = q.filter(getattr(Appointment, field) == parse_int(args[field], field))
+        if current_user.role == "profissional":
+            q = q.filter(Appointment.professional_id == own_professional_id())
         q = q.options(
             joinedload(Appointment.client),
             joinedload(Appointment.professional),
@@ -42,6 +46,7 @@ class AppointmentList(Resource):
         ).order_by(Appointment.starts_at)
         return [dump_appointment(a, tenant) for a in q]
 
+    @roles_required("administrador", "atendente")
     def post(self):
         tenant = current_user.tenant
         data = load_appointment(json_body())
@@ -66,6 +71,7 @@ class AppointmentList(Resource):
 class AppointmentItem(Resource):
     method_decorators = [login_required]
 
+    @roles_required("administrador", "atendente")
     def put(self, appointment_id):
         tenant = current_user.tenant
         appt = get_owned(Appointment, appointment_id)
