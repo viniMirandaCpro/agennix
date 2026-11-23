@@ -263,3 +263,7 @@ def test_moved_after_reminder_is_not_reminded_again(sent, tenant, professional, 
     db.session.commit()
     run_once(NOW)
     assert len(sent) == 1
+
+
+def test_scheduler_command_is_registered(app):
+    assert "scheduler" in app.cli.commands

@@ -24,9 +24,10 @@ Mako==1.4.1
 psycopg2-binary==2.9.13
 greenlet==3.5.6
 
-# --- Agendador de lembretes (WhatsApp / Evolution API) ---
-APScheduler
-requests
+# --- Agendador de lembretes (SMS / Twilio) ---
+# Fixado: o APScheduler 4 muda a API do BlockingScheduler.
+APScheduler==3.11.3
+requests==2.34.2
 
 # --- Validacoes ---
 phonenumbers
