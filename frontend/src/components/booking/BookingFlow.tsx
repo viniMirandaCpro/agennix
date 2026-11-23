@@ -1,6 +1,6 @@
 "use client";
 
-// Historia 5.12: agendamento rapido pelo cliente, sem login. So nome e WhatsApp;
+// Historia 5.12: agendamento rapido pelo cliente, sem login. So nome e celular;
 // so mostra horarios livres (expediente - agendamentos - passado).
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -163,7 +163,7 @@ export default function BookingFlow() {
                 onChange={(e) => setName(e.target.value)} />
             </div>
             <div>
-              <label htmlFor="whatsapp" className="label">WhatsApp</label>
+              <label htmlFor="whatsapp" className="label">Celular</label>
               <input id="whatsapp" className="input" required inputMode="tel" autoComplete="tel"
                 placeholder="(11) 91234-5678" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
             </div>

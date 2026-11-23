@@ -1,4 +1,4 @@
-"""Validacao e normalizacao de numeros de WhatsApp para E.164."""
+"""Validacao e normalizacao do celular do cliente para E.164 (usado no SMS)."""
 import phonenumbers
 from flask_restful import abort
 
@@ -10,5 +10,5 @@ def normalize_whatsapp(raw):
     except phonenumbers.NumberParseException:
         number = None
     if number is None or not phonenumbers.is_valid_number(number):
-        abort(400, message="Número de WhatsApp inválido")
+        abort(400, message="Número de celular inválido")
     return phonenumbers.format_number(number, phonenumbers.PhoneNumberFormat.E164)

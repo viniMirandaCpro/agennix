@@ -1,6 +1,6 @@
 """Agendamento publico, sem login (Historia 5.12).
 
-Exige apenas nome e WhatsApp; so aceita horarios oferecidos por available_slots.
+Exige apenas nome e celular; so aceita horarios oferecidos por available_slots.
 ponytail: sem rate limit nem captcha - suficiente para demo; adicionar antes de expor na internet.
 """
 from flask import request
