@@ -23,7 +23,7 @@ professional.py declaram mais de uma tabela cada:
     api_key.py          api_keys
     notification.py     notifications
 
-No MVP so 7 tabelas estao implementadas; os demais modulos seguem como TODO.
+Por enquanto 8 tabelas estao implementadas (as 7 do MVP + notifications); os demais modulos seguem como TODO.
 """
 from app.models.tenant import Tenant
 from app.models.user import User
@@ -32,3 +32,4 @@ from app.models.professional import Professional
 from app.models.service import Service
 from app.models.working_hours import WorkingHours
 from app.models.appointment import Appointment
+from app.models.notification import Notification
