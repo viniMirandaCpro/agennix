@@ -255,14 +255,49 @@ def test_one_failure_does_not_block_others(monkeypatch, tenant, professional, se
     assert [to for to, _ in sent] == ["+5511912345678"]
 
 
-def test_moved_after_reminder_is_not_reminded_again(sent, tenant, professional, service, customer):
+def test_pending_after_start_is_not_sent(monkeypatch, tenant, professional, service, customer):
+    fake_sender(monkeypatch, fail_for={"+5511987654321"})
+    make_appt(tenant, professional, service, customer, NOW + timedelta(hours=1))
+    run_once(NOW)  # 1a tentativa falha; job fica parado ate depois do horario
+    sent = fake_sender(monkeypatch)
+    run_once(NOW + timedelta(hours=4))
+    n = Notification.query.one()
+    assert sent == []
+    assert (n.status, n.error_message) == ("falhou", "Horário já passou")
+
+
+def test_pending_for_finished_appointment_is_not_sent(sent, tenant, professional, service, customer):
+    appt = make_appt(tenant, professional, service, customer, NOW + timedelta(hours=1), status="concluido")
+    notify(appt, "confirmacao")
+    run_once(NOW)
+    n = Notification.query.one()
+    assert sent == []
+    assert (n.status, n.error_message) == ("falhou", "Agendamento concluido")
+
+
+def move_to_next_week(http, appt):
+    """Remarca pelo painel para 07/12 10:00 (Sao Paulo) = NOW + 7 dias + 1h."""
+    r = http.put(f"/api/appointments/{appt.id}", json={"date": "2026-12-07", "time": "10:00", "confirm_past": True})
+    assert r.status_code == 200
+
+
+def test_reschedule_after_reminder_gets_new_reminder(sent, auth_client, tenant, professional, service, customer):
     appt = make_appt(tenant, professional, service, customer, NOW + timedelta(hours=1))
     run_once(NOW)
-    appt.starts_at = NOW + timedelta(hours=1, minutes=30)
-    appt.ends_at = appt.starts_at + timedelta(minutes=30)
-    db.session.commit()
+    move_to_next_week(auth_client, appt)
+    run_once(NOW + timedelta(days=7))
+    assert len(sent) == 2
+    assert sent[1][1].endswith("em 07/12 as 10:00.")
+
+
+def test_reschedule_drops_pending_reminder(monkeypatch, auth_client, tenant, professional, service, customer):
+    fake_sender(monkeypatch, fail_for={"+5511987654321"})
+    appt = make_appt(tenant, professional, service, customer, NOW + timedelta(hours=1))
+    run_once(NOW)  # lembrete pendente, aguardando nova tentativa
+    sent = fake_sender(monkeypatch)
+    move_to_next_week(auth_client, appt)
     run_once(NOW)
-    assert len(sent) == 1
+    assert sent == []
 
 
 def test_scheduler_command_is_registered(app):

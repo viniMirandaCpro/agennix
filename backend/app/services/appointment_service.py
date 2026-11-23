@@ -141,6 +141,8 @@ def update_appointment(tenant, appt, data):
         if has_conflict(tenant.id, professional.id, new_start, new_end, exclude_id=appt.id):
             _reject_conflict()
 
+    if moved:  # o lembrete antigo tem horario, servico ou profissional errado; o job cria outro
+        Notification.query.filter_by(appointment_id=appt.id, type="lembrete").delete()
     if service.id != appt.service_id:
         appt.price_charged = service.price
     appt.professional, appt.service = professional, service

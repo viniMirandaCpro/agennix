@@ -55,7 +55,7 @@ banimento do numero pela Meta.
 
 | | Abordagem | Troca |
 |---|---|---|
-| **Escolhida** | O job, a cada minuto, cria o lembrete dos agendamentos que entraram na janela e envia na mesma rodada | Remarcacao e cancelamento nao precisam de codigo: a janela e lida na hora |
+| **Escolhida** | O job, a cada minuto, cria o lembrete dos agendamentos que entraram na janela e envia na mesma rodada | Cancelamento nao precisa de codigo; remarcacao so apaga o lembrete antigo (ver Design) |
 | Descartada | Criar o lembrete ao agendar e atualizar `scheduled_for` a cada remarcacao | Mais pontos de codigo em `update_appointment` e mais casos para errar |
 
 **Chamada ao Twilio**: `requests.post` na API REST (`requests` ja instalado),
@@ -89,10 +89,17 @@ Twilio.
    commit a cada mensagem (uma queda no meio do lote nao reenvia o que saiu).
    Sem trava de linha: o servico `scheduler` e um processo so, com
    `max_instances=1`.
-   Agendamento cancelado: `falhou` com "Agendamento cancelado", sem enviar.
+   Agendamento fora de `pendente`/`confirmado`: `falhou` com
+   "Agendamento {status}", sem enviar. Agendamento que ja comecou (job parado
+   ou tentativas atrasadas): `falhou` com "Horário já passou", sem enviar.
    Sucesso: `enviada`, `sent_at`, `provider_message_id`. Erro: `attempts + 1`,
    `error_message`; vira `falhou` na 3a tentativa, senao tenta no proximo
    minuto.
+
+**Remarcacao**: `update_appointment` apaga o lembrete do agendamento quando
+muda horario, servico ou profissional (o texto antigo ficou errado). O job
+cria outro na nova janela; um lembrete pendente nao sai com dias de
+antecedencia. Custo: o registro do lembrete antigo se perde.
 
 **Envio** `app/services/sms_service.py` (substitui `whatsapp_service.py`):
 

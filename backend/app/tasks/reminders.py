@@ -13,6 +13,7 @@ from app.models import Appointment, Client, Notification
 from app.services.sms_service import message_for, send_sms
 
 MAX_ATTEMPTS = 3
+ACTIVE = ("pendente", "confirmado")
 
 
 def queue_reminders(now):
@@ -23,7 +24,7 @@ def queue_reminders(now):
     due = (
         Appointment.query.join(Client, Appointment.client_id == Client.id)
         .filter(
-            Appointment.status.in_(("pendente", "confirmado")),
+            Appointment.status.in_(ACTIVE),
             Appointment.starts_at > now,
             Appointment.starts_at <= now + window,
             # quem agendou dentro da janela acabou de agendar: nao precisa de lembrete
@@ -56,8 +57,11 @@ def send_pending(now):
         .all()
     )
     for n in pending:
-        if n.appointment.status == "cancelado":
-            n.status, n.error_message = "falhou", "Agendamento cancelado"
+        appt = n.appointment
+        if appt.status not in ACTIVE:
+            n.status, n.error_message = "falhou", f"Agendamento {appt.status}"
+        elif appt.starts_at <= now:  # job parado ou tentativas atrasadas: SMS depois do horario so confunde
+            n.status, n.error_message = "falhou", "Horário já passou"
         else:
             n.attempts += 1
             try:
