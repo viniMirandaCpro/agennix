@@ -34,9 +34,10 @@ banimento do numero pela Meta.
 
 ## Restricoes
 
-- Twilio em conta de teste: so envia para numeros verificados e prefixa o
-  texto com "Sent from your Twilio trial account". Envio para o Brasil precisa
-  estar liberado em Geo Permissions no console.
+- Twilio em conta de teste: so envia para numeros verificados e, como se viu
+  no teste real, so aceita os modelos prontos do Twilio, nao o texto do
+  Agennix (ver `docs/sms.md`). Envio para o Brasil precisa estar liberado em
+  Geo Permissions no console.
 - SMS com acento cai de 160 para 70 caracteres por segmento: o texto sai sem
   acento.
 - Testes rodam no Postgres real, sem rede: o envio e substituido por fake.

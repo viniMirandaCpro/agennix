@@ -52,7 +52,7 @@ composta `(tenant_id, id)`.
 
 ```
 agennix/
-├── docker-compose.yml       # postgres + backend + frontend
+├── docker-compose.yml       # postgres + backend + scheduler + frontend
 ├── backend/
 │   ├── config.py            # Config por ambiente
 │   ├── wsgi.py              # entrypoint do gunicorn
@@ -111,6 +111,8 @@ O `docker compose up` tambem sobe o servico `scheduler` (`flask scheduler`),
 que a cada minuto cria os lembretes da janela e envia os SMS pendentes.
 
 ### SMS (Twilio)
+
+Funcionamento, operacao, decisoes e pendencias: **[docs/sms.md](docs/sms.md)**.
 
 A confirmacao sai quando o cliente agenda pelo link publico; o lembrete sai
 `REMINDER_HOURS_BEFORE` horas (padrao 2) antes de qualquer agendamento. Sem
