@@ -123,7 +123,8 @@ credenciais, as mensagens ficam em `notifications` com o erro
 3. Em *Messaging > Settings > Geo Permissions*, libere o Brasil.
 4. Preencha `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` e,
    se quiser, `REMINDER_HOURS_BEFORE` em `backend/.env`.
-5. `docker compose restart scheduler`
+5. `docker compose up -d scheduler` (recria o container com o `.env` novo;
+   `restart` mantem as variaveis antigas)
 
 A conta de teste prefixa o texto com "Sent from your Twilio trial account".
 Para conferir o que saiu:
