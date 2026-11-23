@@ -7,6 +7,8 @@ from sqlalchemy.exc import IntegrityError
 from app.extensions import db
 from app.models import Appointment, Client, Notification
 from app.services.sms_service import message_for, send_sms
+from tests.test_appointments import book
+from tests.test_public_booking import public_book
 
 NOW = datetime(2026, 11, 30, 12, 0, tzinfo=timezone.utc)
 
@@ -127,3 +129,22 @@ def test_message_has_five_fields_without_accents(tenant, professional, service, 
 def test_message_uses_tenant_timezone(tenant, professional, service, customer):
     appt = make_appt(tenant, professional, service, customer, datetime(2026, 12, 1, 2, 30, tzinfo=timezone.utc))
     assert message_for(notify(appt, "lembrete")).endswith("em 30/11 as 23:30.")
+
+
+def test_public_booking_queues_confirmation(client, professional, service):
+    assert public_book(client, professional, service).status_code == 201
+    n = Notification.query.one()
+    assert (n.type, n.channel, n.status, n.destination, n.attempts) == (
+        "confirmacao", "sms", "pendente", "+5511987654321", 0
+    )
+
+
+def test_panel_booking_has_no_confirmation(auth_client, professional, service, customer):
+    assert book(auth_client, professional, service, customer).status_code == 201
+    assert Notification.query.count() == 0
+
+
+def test_conflicting_public_booking_leaves_no_notification(client, professional, service):
+    assert public_book(client, professional, service).status_code == 201
+    assert public_book(client, professional, service, whatsapp="11912345678").status_code == 409
+    assert Notification.query.count() == 1

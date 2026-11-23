@@ -10,7 +10,7 @@ from flask_restful import abort
 from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
-from app.models import Appointment, Client, Professional, Service
+from app.models import Appointment, Client, Notification, Professional, Service
 from app.utils.phone import normalize_whatsapp
 from app.utils.tenant import get_owned
 
@@ -91,6 +91,17 @@ def create_appointment(tenant, *, professional, service, client, starts_at, sour
         created_by_user_id=user.id if user else None,
     )
     db.session.add(appt)
+    if source == "publico":  # 5.12: confirmacao automatica; o job envia em ate 1 minuto
+        db.session.add(
+            Notification(
+                tenant_id=tenant.id,
+                appointment=appt,
+                type="confirmacao",
+                channel="sms",
+                destination=client.whatsapp,
+                scheduled_for=datetime.now(timezone.utc),
+            )
+        )
     _commit()
     return appt
 
