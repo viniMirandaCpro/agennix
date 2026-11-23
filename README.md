@@ -126,8 +126,9 @@ credenciais, as mensagens ficam em `notifications` com o erro
 5. `docker compose up -d scheduler` (recria o container com o `.env` novo;
    `restart` mantem as variaveis antigas)
 
-A conta de teste prefixa o texto com "Sent from your Twilio trial account".
-Para conferir o que saiu:
+A conta de teste do Twilio so envia os modelos prontos dele (`sms_appointment_reminders`
+etc.) e recusa o texto do Agennix com "Trial accounts can only use predefined SMS
+templates". Para os SMS de verdade, faca o upgrade da conta. Para conferir o que saiu:
 `docker compose exec db psql -U agennix -c "select type,status,attempts,error_message from notifications"`.
 
 ### Testes
