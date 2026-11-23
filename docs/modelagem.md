@@ -296,7 +296,7 @@ erDiagram
         bigint tenant_id FK
         bigint appointment_id FK
         varchar type "confirmacao, lembrete"
-        varchar channel "whatsapp, email"
+        varchar channel "sms, email"
         varchar destination
         varchar status "pendente, enviada, falhou"
         timestamptz scheduled_for
@@ -570,12 +570,12 @@ origem por pagamento.
 | `tenant_id` | bigint | não | FK → `tenants` |
 | `appointment_id` | bigint | não | FK → `appointments` |
 | `type` | varchar(20) | não | `confirmacao`, `lembrete` |
-| `channel` | varchar(20) | não | `whatsapp`, `email` |
+| `channel` | varchar(20) | não | `sms`, `email` |
 | `destination` | varchar(180) | não | Número/e-mail efetivamente usado |
 | `status` | varchar(20) | não | `pendente`, `enviada`, `falhou` |
 | `scheduled_for` | timestamptz | não | Quando deve sair (lembrete: `starts_at` − antecedência) |
 | `sent_at` | timestamptz | sim | Quando saiu |
-| `provider_message_id` | varchar(120) | sim | ID na Evolution API |
+| `provider_message_id` | varchar(120) | sim | SID da mensagem no Twilio |
 | `error_message` | text | sim | Diagnóstico da falha |
 | `attempts` | integer | não | Tentativas |
 
@@ -671,7 +671,7 @@ ALTER TABLE notifications
 ```
 
 Se o scheduler rodar duas vezes — reinício do processo, sobreposição de
-execuções — a segunda inserção falha em vez de mandar dois WhatsApps ao cliente.
+execuções — a segunda inserção falha em vez de mandar dois SMS ao cliente.
 
 ### 4.7 Consumo de pacote: o item tem que bater com o atendimento
 
@@ -751,13 +751,17 @@ não omitido.
 | 2 | Alterações salvas imediatamente | Transação por requisição; `updated_at` |
 | 3 | Não excluir/alterar agendamento passado sem confirmação | `appointments.starts_at` comparado a `now()` na camada de serviço; exclusão é lógica (`status = 'cancelado'`, `cancelled_at`, `cancellation_reason`) |
 
-### 5.3 Lembretes automáticos no WhatsApp (Evolution API)
+### 5.3 Lembretes automáticos por SMS (Twilio)
+
+> Canal trocado de WhatsApp (Evolution API) para SMS (Twilio) em 23/11/2026:
+> APIs não oficiais do WhatsApp levam ao banimento do número pela Meta. A
+> coluna `clients.whatsapp` continua guardando o celular do cliente.
 
 | # | Critério | Onde |
 |---|---|---|
 | 1 | Mensagem com nome do cliente, serviço, profissional, dia e horário | Join `appointments` → `clients.name`, `services.name`, `professionals.name`, `appointments.starts_at` |
 | 2 | Envio com antecedência pré-definida | `notifications.scheduled_for` = `starts_at` − `REMINDER_HOURS_BEFORE` |
-| 3 | Validar formato do número de WhatsApp | `clients.whatsapp` em E.164, validado por `app/utils/phone.py` |
+| 3 | Validar formato do número de celular | `clients.whatsapp` em E.164, validado por `app/utils/phone.py` |
 | — | *(implícito)* Não enviar lembrete duplicado | `UNIQUE (appointment_id, type)` — [4.6](#46-lembrete-duplicado) |
 
 ### 5.4 Dashboard de agendamentos
@@ -832,8 +836,8 @@ não omitido.
 | # | Critério | Onde |
 |---|---|---|
 | 1 | Sem senha; só nome e telefone | `clients.password_hash` **nullable**; `appointments.source = 'publico'` |
-| 2 | Validar o número de WhatsApp | `app/utils/phone.py` + `CHECK (whatsapp IS NOT NULL OR email IS NOT NULL)` |
-| 3 | Confirmação automática no WhatsApp | `notifications.type = 'confirmacao'` |
+| 2 | Validar o número de celular | `app/utils/phone.py` + `CHECK (whatsapp IS NOT NULL OR email IS NOT NULL)` |
+| 3 | Confirmação automática por SMS | `notifications.type = 'confirmacao'`, `channel = 'sms'` |
 | 4 | Não permitir horários ocupados | `working_hours` − `appointments` − `time_off`, com a constraint `EXCLUDE` como garantia final |
 
 ### Resumo
